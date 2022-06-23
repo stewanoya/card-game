@@ -1,18 +1,20 @@
 export default class Player {
   constructor(
-    playerName,
+    userName,
     cards = [],
     gold = 0,
     character = { powerUsed: false },
-    districs = [],
-    isAlive = true
+    districts = [],
+    isAlive = true,
+    isHost = false
   ) {
-    (this.playerName = playerName),
+    (this.userName = userName),
       (this.cards = cards),
       (this.character = character),
-      (this.districs = districs),
+      (this.districts = districts),
       (this.gold = gold),
-      (this.isAlive = isAlive);
+      (this.isAlive = isAlive),
+      (this.isHost = isHost);
   }
 
   useCharacterPower() {

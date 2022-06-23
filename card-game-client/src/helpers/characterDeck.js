@@ -1,5 +1,3 @@
-import Card from "./card.js";
-
 const DEFAULT_CHARACTERS_8 = [
   { name: "Assassin", description: "Kill 1" },
   { name: "Thief", description: "Steal From 1" },
@@ -25,32 +23,39 @@ class CharacterDeck {
   burnCard = (cards) => {
     return (cards = cards.splice(Math.floor(Math.random() * cards.length), 1));
   };
+
+  newDeck = (characters, values) => {
+    return characters.flatMap((character, index) => {
+      return new CharacterCard(
+        character.name,
+        values[index],
+        character.description
+      );
+    });
+  };
 }
 
-class CharacterCard extends Card {
-  constructor(cardName, value, jobDescription, drafted = false) {
-    super();
+class CharacterCard {
+  constructor(
+    cardName,
+    value,
+    jobDescription,
+    drafted = false,
+    burned = false,
+    isFaceUp = false
+  ) {
     (this.name = cardName),
       (this.value = value),
       (this.jobDescription = jobDescription),
-      (this.drafted = drafted);
+      (this.drafted = drafted),
+      (this.burned = burned),
+      (this.isFaceUp = isFaceUp);
   }
 }
-
-const newDeck = (characters, values) => {
-  return characters.flatMap((character, index) => {
-    return new CharacterCard(
-      character.name,
-      values[index],
-      character.description
-    );
-  });
-};
 
 export {
   CharacterDeck,
   CharacterCard,
-  newDeck,
   DEFAULT_CHARACTERS_8,
   CHARACTER_VALUES_8,
 };
