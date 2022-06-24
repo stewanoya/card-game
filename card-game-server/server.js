@@ -47,7 +47,7 @@ io.on("connection", (socket) => {
         let card3 = gameData.districtsDeck.shift();
         let card4 = gameData.districtsDeck.shift();
         player.cards = [card1, card2, card3, card4];
-        player.gold = 10;
+        player.gold = 2;
       });
       gameData.currentTurn = gameData.players[0].userName;
       io.emit("initPlayerDetails", gameData);
@@ -65,6 +65,27 @@ io.on("connection", (socket) => {
       firstDraftRound = false;
     }
     io.emit("draftRound", gameData);
+  });
+
+  socket.on("turnEnded", (newGameData) => {
+    gameData = newGameData;
+    const nextPlayerTurn =
+      gameData.players[
+        getIndexOfPlayerByName(gameData.players, gameData.currentTurn) + 1
+      ];
+
+    if (nextPlayerTurn === undefined) {
+      console.log("YOU HAVEN'T PUT THIS IN YET STUPID");
+    }
+
+    gameData.currentTurn = nextPlayerTurn.userName;
+
+    io.emit("nextPlayerTurn", gameData);
+  });
+
+  socket.on("updateGameData", (newGameData) => {
+    gameData = newGameData;
+    io.emit("updateGameData", gameData);
   });
 
   socket.on("nextDraftRound", (newGameData) => {
@@ -87,8 +108,9 @@ io.on("connection", (socket) => {
     io.emit("draftRound", gameData);
   });
 
-  socket.on("districtPlayed", (gameData) => {
-    console.log("HERE IS INCOMING DATA", gameData.players[0].districts);
+  socket.on("districtPlayed", (newGameData) => {
+    gameData = newGameData;
+    io.emit("updateGameData", gameData);
   });
 
   // when someoen closes their window
