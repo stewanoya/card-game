@@ -3,10 +3,11 @@ export default class Player {
     userName,
     cards = [],
     gold = 0,
-    character = { powerUsed: false },
+    character = {},
     districts = [],
     isAlive = true,
-    isHost = false
+    isHost = false,
+    isMarkedForTheft = false
   ) {
     (this.userName = userName),
       (this.cards = cards),
@@ -14,7 +15,8 @@ export default class Player {
       (this.districts = districts),
       (this.gold = gold),
       (this.isAlive = isAlive),
-      (this.isHost = isHost);
+      (this.isHost = isHost),
+      (this.isMarkedForTheft = isMarkedForTheft);
   }
 
   useCharacterPower() {

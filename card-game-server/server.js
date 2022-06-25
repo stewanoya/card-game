@@ -41,6 +41,7 @@ io.on("connection", (socket) => {
       gameData.districtsDeck.forEach((card) => {
         card.id = uuidv4();
       });
+      gameData.initOrderOfPlayers = [...gameData.players];
       gameData.players.forEach((player) => {
         let card1 = gameData.districtsDeck.shift();
         let card2 = gameData.districtsDeck.shift();

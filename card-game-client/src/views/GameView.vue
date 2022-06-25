@@ -1,5 +1,6 @@
 <template>
   <div class="game-container">
+    <OpponentsContainer :opponents="opponents" />
     <div class="gather-card-container" v-if="resourceGatherCards.length == 2">
       <DistrictCard
         v-for="card in resourceGatherCards"
@@ -11,6 +12,50 @@
         @click="gatherCardSelected(card)"
       />
     </div>
+    <div class="use-power-container" v-if="showPowerScreen && !powerUsed">
+      <!-- power screen can be it's own component -->
+      <!-- I can pass down the character name as a prop -->
+
+      <!-- ASSASSIN -->
+      <div class="target-choices" v-if="draftedCharacterName === 'Assassin'">
+        Which character do you wish to kill?
+        <div v-for="character in charactersArray" :key="character.name">
+          <button
+            v-if="character.name !== 'Assassin'"
+            @click="
+              killPlayer(gameData, getPlayerByCharacterName(character.name))
+            "
+            class="target-choices-button"
+            :key="character.name"
+          >
+            {{ character.name }}
+          </button>
+        </div>
+      </div>
+
+      <!-- THIEF -->
+      <div class="target-choices" v-if="draftedCharacterName === 'Thief'">
+        Which character do you wish to steal from?
+        <div v-for="character in charactersArray" :key="character.name">
+          <button
+            v-if="character.name !== 'Thief'"
+            @click="
+              markPlayerForTheft(
+                gameData,
+                getPlayerByCharacterName(character.name)
+              )
+            "
+            class="target-choices-button"
+          >
+            {{ character.name }}
+          </button>
+        </div>
+      </div>
+
+      <button class="close-power-screen" @click="showPowerScreenHandler">
+        Close
+      </button>
+    </div>
     <div
       class="end-turn-container"
       v-if="
@@ -20,6 +65,14 @@
       "
     >
       <button @click="endTurnHandler">End Turn</button>
+    </div>
+    <div
+      class="use-power-button-container"
+      v-if="gameData.currentTurn == player.userName && !showCharacterCards"
+    >
+      <button @click="showPowerScreenHandler" :disabled="powerUsed">
+        Use Power
+      </button>
     </div>
     <div
       class="gather-resources-container"
@@ -34,6 +87,7 @@
       </div>
     </div>
     <div class="characters-container" v-if="showCharacterCards">
+      <h1 class="choose-title">Choose a character!</h1>
       <CharacterCard
         v-for="character in gameData.charactersDeck"
         :key="character.name"
@@ -41,6 +95,7 @@
         :value="character.value"
         :jobDescription="character.jobDescription"
         @click="draftCharacter(character)"
+        class="character-card"
         :class="character.burned || character.drafted ? 'hide-card' : null"
       />
     </div>
@@ -119,6 +174,7 @@ import {
   DEFAULT_CHARACTERS_8,
   CHARACTER_VALUES_8,
 } from "@/helpers/characterDeck";
+import OpponentsContainer from "@/components/OpponentsContainer.vue";
 
 export default {
   data() {
@@ -130,7 +186,10 @@ export default {
       gatherResources: false,
       showCharacterCards: false,
       powerUsed: false,
+      showPowerScreen: false,
+      isUsingPower: false,
       resourceGatherCards: [],
+      charactersArray: [],
     };
   },
   created() {
@@ -164,6 +223,7 @@ export default {
     DistrictCard,
     PlayedDistrict,
     CharacterCard,
+    OpponentsContainer,
   },
   computed: {
     ...mapState(["socket", "player", "gameData", "init"]),
@@ -183,10 +243,15 @@ export default {
       }
       return false;
     },
+
+    draftedCharacterName() {
+      return this.player.character.name;
+    },
   },
   methods: {
     startGame() {
       if (this.init === false) {
+        this.charactersArray = [...DEFAULT_CHARACTERS_8];
         let districtsDeck = new DistrictsDeck().shuffleDeck();
         let charactersDeck = new CharacterDeck().newDeck(
           DEFAULT_CHARACTERS_8,
@@ -204,6 +269,9 @@ export default {
         });
       }
     },
+    showPowerScreenHandler() {
+      this.showPowerScreen = !this.showPowerScreen;
+    },
     generateID() {
       return Math.random()
         .toString(36)
@@ -215,24 +283,39 @@ export default {
         this.showCharacterCards = true;
       }
     },
+    hasCardAlreadyBeenPlayed(cardName, player) {
+      for (let card of player.districts) {
+        if (card.districtName === cardName) {
+          return true;
+        }
+      }
+
+      return false;
+    },
     canPlayDistrictHandler(card) {
       this.drag = true;
+      this.cardCanBePlayed = false;
       const cardData = card.item.innerText.split("\n\n");
       const cardCost = Number(cardData[0]);
       const cardName = cardData[1];
       const cardType = cardData[2];
+      let hasCardAlreadyBeenPlayed = this.hasCardAlreadyBeenPlayed(
+        cardName,
+        this.player
+      );
       this.rememberCardCost = cardCost;
       if (
         this.player.gold >= cardCost &&
         this.gameData.currentTurn === this.player.userName &&
-        !this.districtPlayed
+        !this.districtPlayed &&
+        !hasCardAlreadyBeenPlayed
       ) {
         this.cardCanBePlayed = true;
       }
     },
     districtCardHasBeenPlayed() {
       this.cardCanBePlayed = false;
-      this.districtPlayed = true;
+      this.districtPlayed = false;
 
       this.player.gold -= this.rememberCardCost;
       store.commit("updatePlayerToGameData", this.player);
@@ -249,6 +332,10 @@ export default {
     },
     startPlayerRound() {
       this.gatherResources = true;
+      // do a check to see if player is a character that requires taking immediate action before
+      // gathering resources.
+      // it looks like character powers can be used at anytime...
+
       // if it's the players turn, display gather resource options
       // display character card start animation?
       // how to handle next turns?
@@ -259,7 +346,9 @@ export default {
       // go to next player
       // set
     },
+
     gatherGoldHandler() {
+      console.log(this.gameData);
       this.gatherResources = false;
       this.player.gold += 2;
       store.commit("updatePlayerToGameData", this.player);
@@ -285,11 +374,60 @@ export default {
       this.resourceGatherCards = [];
       this.socket.emit("updateGameData", this.gameData);
     },
+    getPlayerByCharacterName(characterName) {
+      return this.gameData.players.find(
+        (player) => player.character.name == characterName
+      );
+    },
+    killPlayer(gameData, playerToKill) {
+      let foundPlayer = gameData.players.find(
+        (player) => player === playerToKill
+      );
+      if (!foundPlayer) {
+        this.powerUsed = true;
+        this.showPowerScreen = false;
+        return;
+      }
+      foundPlayer.isAlive = false;
+      store.commit("updatePlayerToGameData", foundPlayer);
+      this.socket.emit("updateGameData", this.gameData);
+      this.powerUsed = true;
+      this.showPowerScreen = false;
+    },
   },
 };
 </script>
 
 <style scoped>
+.close-power-screen {
+  z-index: 10000;
+  background-color: red;
+}
+.use-power-container {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.target-choices {
+  width: 30%;
+  height: 40%;
+  background-color: rgb(34, 34, 34);
+  z-index: 10000;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: space-between;
+  margin: 15px;
+}
+
+.target-choices-button {
+  margin: 10px;
+}
+
 h2 {
   color: white;
 }
@@ -357,8 +495,15 @@ h2 {
   position: absolute;
   right: 25px;
   bottom: 140px;
-  z-index: 100;
+  z-index: 100000;
 }
+.use-power-button-container {
+  position: absolute;
+  right: 25px;
+  bottom: 50px;
+  z-index: 100000;
+}
+
 .gather-resources-container {
   position: absolute;
   background-color: rgba(48, 48, 48, 0.534);
@@ -402,15 +547,23 @@ h2 {
 .grabbing * {
   cursor: grabbing !important;
 }
+.choose-title {
+  position: absolute;
+  top: 45%;
+  left: 40%;
+  color: white;
+  text-shadow: 0 0 10px black;
+}
 .characters-container {
   width: 100%;
   height: 100%;
+  position: absolute;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
   z-index: 10;
-  padding-top: 10%;
+  z-index: 99999;
 }
 .hide-card {
   display: none;
@@ -418,5 +571,9 @@ h2 {
 
 .card {
   background-color: white;
+}
+
+.character-card:hover {
+  cursor: pointer;
 }
 </style>

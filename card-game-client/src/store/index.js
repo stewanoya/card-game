@@ -12,6 +12,7 @@ export default createStore({
       charactersDeck: [],
       players: [],
       currentTurn: undefined,
+      initOrderOfPlayers: [],
     },
     initPlayerDetails: false,
     init: false,
@@ -30,7 +31,7 @@ export default createStore({
       return state.init;
     },
     opponents(state) {
-      return state.gameData.players.filter(
+      return state.gameData.initOrderOfPlayers.filter(
         (opponent) => opponent.userName !== state.player.userName
       );
     },
