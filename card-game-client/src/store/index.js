@@ -31,9 +31,9 @@ export default createStore({
       return state.init;
     },
     opponents(state) {
-      return state.gameData.initOrderOfPlayers.filter(
-        (opponent) => opponent.userName !== state.player.userName
-      );
+      return state.gameData.players
+        .filter((opponent) => opponent.userName != state.player.userName)
+        .sort((a, b) => a.originalIndex - b.originalIndex);
     },
   },
   mutations: {

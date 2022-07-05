@@ -3,12 +3,11 @@ const app = require("express")();
 const http = require("http").createServer(app);
 const io = require("socket.io")(http, {
   cors: {
-    origin: "http://localhost:8080",
+    origin: ["http://localhost:8080", "app://."],
     methods: ["GET", "POST"],
   },
 });
 const { v4: uuidv4 } = require("uuid");
-
 // could make it an array of objects to hold more data
 let gameData = {
   players: [],
@@ -29,6 +28,7 @@ io.on("connection", (socket) => {
       gameData.host = player.userName;
       player.isHost = true;
     }
+    player.originalIndex = gameData.players.length;
     gameData.players.push(player);
     io.emit("initPlayerDetailsLobby", gameData.players);
     io.emit("connectedPlayer", gameData.players);
@@ -61,6 +61,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("beginDraft", () => {
+    // TODO: confirm that getIndexOfPlayerByName works in second round of draft.
+    // I imagine it will be fine, since I sort by king anyway, and then just up by 1 everyturn
+    //
     if (firstDraftRound) {
       gameData.charactersDeck = burnCard(gameData.charactersDeck);
       firstDraftRound = false;
@@ -72,11 +75,20 @@ io.on("connection", (socket) => {
     gameData = newGameData;
     const nextPlayerTurn =
       gameData.players[
+        // for getting the next turn during character round
         getIndexOfPlayerByName(gameData.players, gameData.currentTurn) + 1
       ];
 
     if (nextPlayerTurn === undefined) {
-      console.log("YOU HAVEN'T PUT THIS IN YET STUPID");
+      sortPlayersByKing(gameData.players);
+
+      // I have to reset character deck
+      // I have to make sure all character booleans on players are reset
+      // I have to find the king's original index - DONE
+      // splice an array from the kings index to the end - DONE
+      // and then from the beginning to the king spliced - DONE
+      // and have the new player order be those ^ 2 arrays concat together - DONE.
+      // this can probably be it's own function - sortPlayersByKing
     }
 
     gameData.currentTurn = nextPlayerTurn.userName;
@@ -110,15 +122,18 @@ io.on("connection", (socket) => {
   });
 
   socket.on("districtPlayed", (newGameData) => {
-    gameData = newGameData;
+    gameData = { ...newGameData };
     io.emit("updateGameData", gameData);
   });
 
   // when someoen closes their window
   socket.on("disconnect", () => {
-    console.log("A user disconnected " + socket.id);
+    let disconnectedPlayer = gameData.players.find(
+      (player) => player.id == socket.id
+    );
+    console.log("A user disconnected " + disconnectedPlayer.userName);
     gameData.players = gameData.players.filter(
-      (player) => player.id !== socket.id
+      (player) => player !== disconnectedPlayer
     );
     io.emit("disconnectedPlayer", gameData.players);
     if (gameData.players.length == 0) {
@@ -135,6 +150,23 @@ io.on("connection", (socket) => {
     }
   });
 });
+
+const sortPlayersByKing = (players) => {
+  console.log("here is players at the start", players);
+  let foundKing = players.find((player) => player.isKing === true);
+  let sortedPlayers = [
+    ...players.sort((a, b) => a.originalIndex - b.originalIndex),
+  ];
+  let fromKingToEnd = [
+    ...sortedPlayers.splice(foundKing.originalIndex, sortedPlayers.length - 1),
+  ];
+  let fromStartToKing = [...sortedPlayers];
+
+  console.log("here is what it becomes", [
+    ...fromKingToEnd,
+    ...fromStartToKing,
+  ]);
+};
 
 http.listen(3000, () => {
   console.log("Server Started!");

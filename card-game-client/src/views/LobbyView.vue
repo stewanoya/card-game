@@ -27,6 +27,10 @@ export default {
       socket.emit("newPlayer", this.player);
     });
 
+    socket.on("disconnectedPlayer", (newPlayersInfo) => {
+      store.commit("updatePlayers", newPlayersInfo);
+    });
+
     socket.on("connectedPlayer", (players) => {
       store.commit("updatePlayers", players);
       store.commit("updatePlayerFromGameData", players);
@@ -51,6 +55,7 @@ export default {
       "setSocket",
       "updatePlayers",
       "updatePlayerFromGameData",
+      "updateGameData",
     ]),
     ...mapState(["socket", "player", "gameData"]),
   },

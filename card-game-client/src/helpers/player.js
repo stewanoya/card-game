@@ -7,7 +7,9 @@ export default class Player {
     districts = [],
     isAlive = true,
     isHost = false,
-    isMarkedForTheft = false
+    isMarkedForTheft = false,
+    originalIndex,
+    isKing = false
   ) {
     (this.userName = userName),
       (this.cards = cards),
@@ -16,7 +18,9 @@ export default class Player {
       (this.gold = gold),
       (this.isAlive = isAlive),
       (this.isHost = isHost),
-      (this.isMarkedForTheft = isMarkedForTheft);
+      (this.isMarkedForTheft = isMarkedForTheft),
+      (this.originalIndex = originalIndex),
+      (this.isKing = isKing);
   }
 
   useCharacterPower() {
