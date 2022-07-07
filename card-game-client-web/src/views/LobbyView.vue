@@ -21,7 +21,7 @@ import { mapGetters, mapState, mapMutations } from "vuex";
 
 export default {
   created() {
-    const socket = io("http://localhost:3000");
+    const socket = io("https://card-game-server1.herokuapp.com/");
     socket.on("connect", () => {
       store.commit("createNewPlayer");
       socket.emit("newPlayer", this.player);
