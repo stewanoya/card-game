@@ -3,7 +3,13 @@ const app = require("express")();
 const http = require("http").createServer(app);
 const io = require("socket.io")(http, {
   cors: {
-    origin: ["http://localhost:8080", "app://."],
+    origin: [
+      // "http://localhost:8080",
+      // "app://.",
+      // "inquisitive-tarsier-d80faa.netlify.app",
+      // "http://localhost:4173",
+      "https://62c639e1ab4b2c18edd3fc7b--inquisitive-tarsier-d80faa.netlify.app/#/",
+    ],
     methods: ["GET", "POST"],
   },
 });
@@ -50,7 +56,6 @@ io.on("connection", (socket) => {
         player.cards = [card1, card2, card3, card4];
         player.gold = 2;
       });
-      gameData.currentTurn = gameData.players[0].userName;
       io.emit("initPlayerDetails", gameData);
       gameData.gameStarted = true;
     });
@@ -60,14 +65,12 @@ io.on("connection", (socket) => {
     io.emit("gameStartedByHost");
   });
 
-  socket.on("beginDraft", () => {
+  socket.on("beginDraft", (newGameData) => {
+    gameData = newGameData;
+    gameData.currentTurn = gameData.players[0].userName;
+
     // TODO: confirm that getIndexOfPlayerByName works in second round of draft.
     // I imagine it will be fine, since I sort by king anyway, and then just up by 1 everyturn
-    //
-    if (firstDraftRound) {
-      gameData.charactersDeck = burnCard(gameData.charactersDeck);
-      firstDraftRound = false;
-    }
     io.emit("draftRound", gameData);
   });
 
@@ -80,8 +83,9 @@ io.on("connection", (socket) => {
       ];
 
     if (nextPlayerTurn === undefined) {
-      sortPlayersByKing(gameData.players);
-
+      gameData.players = [...sortPlayersByKing(gameData.players)];
+      io.emit("allPlayerTurnsCompleted", gameData);
+      return;
       // I have to reset character deck
       // I have to make sure all character booleans on players are reset
       // I have to find the king's original index - DONE
@@ -152,20 +156,19 @@ io.on("connection", (socket) => {
 });
 
 const sortPlayersByKing = (players) => {
-  console.log("here is players at the start", players);
   let foundKing = players.find((player) => player.isKing === true);
   let sortedPlayers = [
     ...players.sort((a, b) => a.originalIndex - b.originalIndex),
   ];
+  if (!foundKing) {
+    return sortedPlayers;
+  }
   let fromKingToEnd = [
     ...sortedPlayers.splice(foundKing.originalIndex, sortedPlayers.length - 1),
   ];
   let fromStartToKing = [...sortedPlayers];
 
-  console.log("here is what it becomes", [
-    ...fromKingToEnd,
-    ...fromStartToKing,
-  ]);
+  return [...fromKingToEnd, ...fromStartToKing];
 };
 
 http.listen(3000, () => {
@@ -174,11 +177,6 @@ http.listen(3000, () => {
 
 const getOpponents = (player, array) => {
   return array.filter((enemy) => player.playerName !== enemy.playerName);
-};
-
-const burnCard = (cards) => {
-  cards.splice(Math.floor(Math.random() * cards.length), 1);
-  return cards;
 };
 
 const getIndexOfPlayerByName = (players, currentTurnName) => {
