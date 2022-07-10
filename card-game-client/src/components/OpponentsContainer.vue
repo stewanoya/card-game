@@ -13,6 +13,7 @@
       :class="numberOfPlayersClassItem"
       :isDestroying="isDestroying"
       :destructionComplete="destructionComplete"
+      :currentTurn="currentTurn"
     />
   </div>
 </template>
@@ -24,6 +25,7 @@ export default {
     opponents: { type: Array, required: true },
     isDestroying: { type: Boolean, required: true },
     destructionComplete: { type: Function, required: true },
+    currentTurn: { type: String, required: true },
   },
   name: "OpponentsContainer",
   components: {

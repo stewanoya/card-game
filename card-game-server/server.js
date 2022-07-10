@@ -1,15 +1,27 @@
+const cors = require("cors");
+require("dotenv").config();
 const app = require("express")();
+const corsOptions = {
+  origin: "*",
+  credentials: true, //access-control-allow-credentials:true
+  optionSuccessStatus: 200,
+};
 
+app.use(cors());
 const http = require("http").createServer(app);
 const io = require("socket.io")(http, {
   cors: {
     origin: [
       // "http://localhost:8080",
       // "app://.",
-      // "inquisitive-tarsier-d80faa.netlify.app",
+      "inquisitive-tarsier-d80faa.netlify.app",
+      "https://inquisitive-tarsier-d80faa.netlify.app",
       // "http://localhost:4173",
-      "https://62c639e1ab4b2c18edd3fc7b--inquisitive-tarsier-d80faa.netlify.app/#/",
+      "https://62c63ee446dacf234ae5e10f--inquisitive-tarsier-d80faa.netlify.app/#/",
+      "https://62c63ee446dacf234ae5e10f--inquisitive-tarsier-d80faa.netlify.app/",
+      "http://62c63ee446dacf234ae5e10f--inquisitive-tarsier-d80faa.netlify.app/#/",
     ],
+    allowedHeaders: ["Access-Control-Allow-Origin"],
     methods: ["GET", "POST"],
   },
 });
@@ -171,7 +183,7 @@ const sortPlayersByKing = (players) => {
   return [...fromKingToEnd, ...fromStartToKing];
 };
 
-http.listen(3000, () => {
+http.listen(process.env.PORT || 5000, () => {
   console.log("Server Started!");
 });
 

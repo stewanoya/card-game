@@ -45,6 +45,7 @@
       :opponents="opponents"
       :isDestroying="isDestroying"
       :destructionComplete="destructionComplete"
+      :currentTurn="gameData.currentTurn"
     />
     <div class="gather-card-container" v-if="resourceGatherCards.length == 2">
       <DistrictCard

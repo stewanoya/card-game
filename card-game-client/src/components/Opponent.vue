@@ -71,6 +71,7 @@ export default {
     isKing: { type: Boolean, required: true },
     isDestroying: { type: Boolean, required: true },
     destructionComplete: { type: Function, required: true },
+    currentTurn: { type: String, required: true },
   },
   name: "Opponent",
   components: {
