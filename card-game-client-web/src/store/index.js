@@ -31,9 +31,23 @@ export default createStore({
       return state.init;
     },
     opponents(state) {
-      return state.gameData.players
-        .filter((opponent) => opponent.userName != state.player.userName)
-        .sort((a, b) => a.originalIndex - b.originalIndex);
+      let copyOfPlayers1 = [...state.gameData.players]; // I seperated these since sort mutates the array
+      let copyOfPlayers2 = [...state.gameData.players]; // I didn't want to conflict with player 1s layout.
+      // could probably be changed back to just have 1 copy.
+      if (state.player.originalIndex === 0) {
+        return copyOfPlayers1
+          .filter((opponent) => opponent.userName != state.player.userName)
+          .sort((a, b) => a.originalIndex - b.originalIndex);
+      }
+      copyOfPlayers2.sort((a, b) => a.originalIndex - b.originalIndex);
+
+      let indexOfPlayer = state.player.originalIndex;
+
+      let leftSide = [...copyOfPlayers2.slice(0, indexOfPlayer)];
+      let rightSide = [...copyOfPlayers2.slice(indexOfPlayer + 1)];
+      // have to swap the sides to emualte sitting around a table
+      // see clickup for info.
+      return [...rightSide, ...leftSide];
     },
   },
   mutations: {
