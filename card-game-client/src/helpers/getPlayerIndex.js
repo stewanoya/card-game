@@ -8,4 +8,4 @@ const getPlayerIndex = (state, username) => {
   return index;
 };
 
-module.exports = { getPlayerIndex };
+export default getPlayerIndex;

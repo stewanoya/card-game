@@ -1,7 +1,7 @@
 import { createStore, storeKey } from "vuex";
 import io from "socket.io-client";
 import Player from "@/helpers/player";
-import { getPlayerIndex } from "@/helpers/getPlayerIndex";
+import getPlayerIndex from "@/helpers/getPlayerIndex.js";
 
 export default createStore({
   state: {

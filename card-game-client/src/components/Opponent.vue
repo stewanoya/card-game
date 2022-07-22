@@ -34,7 +34,7 @@
       </svg>
     </div>
     <div class="avatar">
-      <h5>{{ character ?? "No choice" }}</h5>
+      <h5 v-if="currentTurn === userName">{{ character }}</h5>
       <p>{{ userName }}</p>
     </div>
     <div class="details-container">

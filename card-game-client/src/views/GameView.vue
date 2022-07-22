@@ -1,5 +1,15 @@
 <template>
   <div class="game-container">
+    <div class="player-info-container">
+      <h1>Username=</h1>
+      <span>{{ player.userName }}</span>
+      <hr />
+      <h1>Character</h1>
+      <h4>Name=</h4>
+      <span>{{
+        player.character ? player.character.name : "None Chosen Yet"
+      }}</span>
+    </div>
     <CommunityBuild
       :opponents="opponents"
       :transaction-handler="communityBuildTransaction"
@@ -474,7 +484,6 @@ export default {
           DEFAULT_CHARACTERS_8,
           CHARACTER_VALUES_8
         );
-
         this.burnCharacterCards(charactersDeck, this.gameData.players.length);
 
         const decks = { districtsDeck, charactersDeck };
@@ -502,13 +511,10 @@ export default {
       this.socket.emit("beginDraft", this.gameData);
     },
     burnCharacterCards(charactersDeck, numberOfPlayers) {
-      switch (numberOfPlayers) {
-        case 2:
-          return charactersDeck.splice(
-            Math.floor(Math.random() * charactersDeck.length),
-            1
-          );
-      }
+      return charactersDeck.splice(
+        Math.floor(Math.random() * charactersDeck.length),
+        1
+      );
     },
     resetLocalValues() {
       this.drag = false;
@@ -1148,5 +1154,12 @@ h2 {
   top: 40%;
   transform: translate(-50%, 0);
   z-index: 1000000;
+}
+
+.player-info-container {
+  position: absolute;
+  width: max-content;
+  right: 100px;
+  bottom: 100px;
 }
 </style>

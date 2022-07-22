@@ -12,7 +12,7 @@ const http = require("http").createServer(app);
 const io = require("socket.io")(http, {
   cors: {
     origin: [
-      // "http://localhost:8080",
+      "http://localhost:3000",
       // "app://.",
       "inquisitive-tarsier-d80faa.netlify.app",
       "https://inquisitive-tarsier-d80faa.netlify.app",
