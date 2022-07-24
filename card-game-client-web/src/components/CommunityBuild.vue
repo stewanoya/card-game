@@ -97,6 +97,8 @@ export default {
   computed: {
     ...mapState(["player"]),
     checkConditions() {
+      // COST IS A STRING!!!!!!
+
       // NO PLAYER CHECK
       if (this.targetPlayer === undefined) {
         return false;
@@ -122,6 +124,16 @@ export default {
 
       // ALREADY BUILT
       if (this.districtPlayed === true) {
+        return false;
+      }
+
+      // check that the player has enough gold with the cards being given away
+      if (
+        this.player.gold +
+          this.cardsToGiveUp.length -
+          Number(this.cardToBeBuilt[0].cost) <
+        0
+      ) {
         return false;
       }
 

@@ -30,6 +30,9 @@ export default createStore({
     init(state) {
       return state.init;
     },
+    // this should only be used for the table
+    // I'm dumb, i shouldve made a seperate more specific one for eht table
+    // and another that would be just for getting opponents for other things.
     opponents(state) {
       let copyOfPlayers1 = [...state.gameData.players]; // I seperated these since sort mutates the array
       let copyOfPlayers2 = [...state.gameData.players]; // I didn't want to conflict with player 1s layout.
@@ -51,6 +54,9 @@ export default createStore({
     },
   },
   mutations: {
+    removeHost(state) {
+      state.gameData.players.forEach((player) => (player.isHost = false));
+    },
     updateCharacterCards(state, charactersCards) {
       state.gameData.charactersDeck;
     },

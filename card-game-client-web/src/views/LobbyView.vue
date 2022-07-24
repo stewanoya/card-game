@@ -1,16 +1,22 @@
 <template>
   <div class="lobby">
-    <Lobby :players="gameData.players"></Lobby>
-    <button
+    <Lobby :players="gameData.players" :socket="socket"></Lobby>
+
+    <n-button
+      color="#452059"
       class="lobby-button"
       :disabled="gameData.players.length < 1"
       v-if="player.isHost"
       @click="startGame"
     >
       Start Game
-    </button>
+    </n-button>
   </div>
 </template>
+
+<script setup>
+import { NButton, useMessage } from "naive-ui";
+</script>
 
 <script>
 // @ is an alias to /src
@@ -24,6 +30,8 @@ export default {
   created() {
     // const socket = io("https://card-game-server1.herokuapp.com/");
     const socket = io("http://localhost:5000/");
+    store.commit("setSocket", socket);
+
     socket.on("connect", () => {
       store.commit("createNewPlayer");
       socket.emit("newPlayer", this.player);
@@ -36,7 +44,6 @@ export default {
     socket.on("connectedPlayer", (players) => {
       store.commit("updatePlayers", players);
       store.commit("updatePlayerFromGameData", players);
-      store.commit("setSocket", socket);
     });
 
     socket.on("gameStartedByHost", () => {
@@ -82,15 +89,11 @@ export default {
 
 .lobby-button {
   margin-top: 20px;
-  width: 25%;
-  height: 50px;
+  width: 30%;
+  max-width: 500px;
+  height: 80px;
+  border: 2px solid #380256;
   border-radius: 10px;
-  border: none;
-  background-color: #551e73;
-  font-size: 18px;
-  font-weight: bold;
-  color: white;
-  border: 2px solid #1c0727;
-  box-shadow: 0px 4px 8px #00000042;
+  font-size: 20px;
 }
 </style>
