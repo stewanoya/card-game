@@ -175,10 +175,11 @@ const sortPlayersByKing = (players) => {
   if (!foundKing) {
     return sortedPlayers;
   }
+  // slice is not including the stop parameter
   let fromKingToEnd = [
-    ...sortedPlayers.splice(foundKing.originalIndex, sortedPlayers.length - 1),
+    ...sortedPlayers.slice(foundKing.originalIndex, sortedPlayers.length),
   ];
-  let fromStartToKing = [...sortedPlayers];
+  let fromStartToKing = [...sortedPlayers.slice(0, foundKing.originalIndex)];
 
   return [...fromKingToEnd, ...fromStartToKing];
 };

@@ -55,7 +55,6 @@
       :opponents="opponents"
       :isDestroying="isDestroying"
       :destructionComplete="destructionComplete"
-      :currentTurn="gameData.currentTurn"
     />
     <div class="gather-card-container" v-if="resourceGatherCards.length == 2">
       <DistrictCard
@@ -355,6 +354,7 @@
           ghost-class="ghost"
           :key="element.id"
           id="card"
+          class="card-in-hand"
         />
       </template>
     </draggable>
@@ -1161,5 +1161,15 @@ h2 {
   width: max-content;
   right: 100px;
   bottom: 100px;
+}
+
+.card-in-hand {
+  margin-right: -2rem;
+  transition: margin-right 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.card-in-hand:hover {
+  margin-right: 5px;
+  transition: margin-right 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 </style>

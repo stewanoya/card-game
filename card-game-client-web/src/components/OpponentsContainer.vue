@@ -1,7 +1,7 @@
 <template>
   <div class="opponents-container" :class="numberOfPlayersClass">
     <Opponent
-      v-for="opponent in opponents"
+      v-for="(opponent, index) in opponents"
       :key="opponent.userName"
       :cards="opponent.cards"
       :playedCards="opponent.districts"
@@ -13,7 +13,8 @@
       :class="numberOfPlayersClassItem"
       :isDestroying="isDestroying"
       :destructionComplete="destructionComplete"
-      :currentTurn="currentTurn"
+      :index="index"
+      :opponentsLength="opponents.length"
     />
   </div>
 </template>
@@ -25,7 +26,6 @@ export default {
     opponents: { type: Array, required: true },
     isDestroying: { type: Boolean, required: true },
     destructionComplete: { type: Function, required: true },
-    currentTurn: { type: String, required: true },
   },
   name: "OpponentsContainer",
   components: {
@@ -96,6 +96,15 @@ export default {
 .two-player-positioning {
   display: flex;
   justify-content: center;
+}
+
+.three-player-positioning {
+  display: flex;
+  justify-content: space-around;
+}
+
+.three-player-positioning--item {
+  margin-top: 80px;
 }
 
 .six-player-positioning {

@@ -33,22 +33,27 @@
         <g></g>
       </svg>
     </div>
-    <div class="avatar">
-      <h5 v-if="currentTurn === userName">{{ character }}</h5>
+    <div
+      class="avatar"
+      :class="gameData.currentTurn === userName ? 'turn-indicator' : ''"
+    >
+      <h5 v-if="gameData.currentTurn === userName">{{ character }}</h5>
+
       <p>{{ userName }}</p>
+      <h3 v-if="gameData.currentTurn === userName && !character">Drafting..</h3>
     </div>
     <div class="details-container">
       <p>Cards: {{ cards.length }}</p>
       <p>Gold: {{ gold }}</p>
     </div>
-    <div class="opponent-played-zone">
+    <div class="opponent-played-zone" :class="doesDropZoneNeedRotation">
       <OpponentPlayedDistrict
         v-for="element in playedCards"
         :name="element.districtName"
         :type="element.type"
         :cost="element.cost"
         :key="element.id"
-        class="flip-over"
+        class="flip-over opponent-played-card"
         :class="{ 'red-glow': isDestroying }"
         @click="destroyCardHandler(element, userName)"
       />
@@ -71,7 +76,8 @@ export default {
     isKing: { type: Boolean, required: true },
     isDestroying: { type: Boolean, required: true },
     destructionComplete: { type: Function, required: true },
-    currentTurn: { type: String, required: true },
+    index: { type: Number, required: true },
+    opponentsLength: { type: Number, required: true },
   },
   name: "Opponent",
   components: {
@@ -83,6 +89,18 @@ export default {
   computed: {
     ...mapState(["socket", "gameData", "player"]),
     ...mapMutations(["destroyPlayedCard"]),
+    doesDropZoneNeedRotation() {
+      // only need to rotate the first and last dropzones if there are 2 or more opponents
+      if (this.opponentsLength > 1) {
+        if (this.index === 0) {
+          return "first-child-rotation";
+        }
+
+        if (this.index === this.opponentsLength - 1) {
+          return "last-child-rotation";
+        }
+      }
+    },
   },
   methods: {
     destroyCardHandler(cardToDestroy, userName) {
@@ -99,18 +117,31 @@ export default {
 </script>
 
 <style scoped>
+h3 {
+  font-size: 14px;
+  font-weight: bold;
+}
 .opponent-container--item {
-  width: 100%;
+  width: fit-content;
   height: 100%;
   position: relative;
   display: flex;
+  justify-content: center;
 }
 
 .avatar {
-  width: 50%;
   height: 100%;
+  min-width: 100px;
+  min-height: 100px;
+  max-height: 250px;
+  max-width: 250px;
+  aspect-ratio: 1;
   border-radius: 100%;
   background-color: rgb(224, 227, 255);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 .crown-container {
   width: 100%;
@@ -125,13 +156,15 @@ export default {
 }
 .opponent-played-zone {
   width: 100%;
-  height: 20%;
+  height: 30%;
+  max-height: 40px;
   background-color: rgb(223, 223, 223);
   position: absolute;
   top: 160%;
   left: 0;
-  transform: perspective(1px) rotateX(0.75deg);
+  transform: perspective(10px) rotateX(5deg);
   display: flex;
+  align-items: center;
   z-index: 1000;
 }
 
@@ -145,5 +178,36 @@ export default {
 
 .red-glow:hover {
   cursor: pointer;
+}
+
+.turn-indicator {
+  animation: glowingTurnIndicator 2.5s ease-in-out infinite;
+}
+
+@keyframes glowingTurnIndicator {
+  0% {
+    box-shadow: 0px 0px 1px 1px green;
+  }
+  50% {
+    box-shadow: 0px 0px 10px 5px green;
+  }
+  100% {
+    box-shadow: 0px 0px 1px 1px green;
+  }
+}
+
+.first-child-rotation {
+}
+
+.last-child-rotation {
+}
+
+.details-container {
+  position: absolute;
+  right: 0px;
+}
+
+.opponent-played-card {
+  height: 80%;
 }
 </style>
