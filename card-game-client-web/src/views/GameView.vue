@@ -78,7 +78,11 @@
           <button
             v-if="character.name !== 'Assassin'"
             @click="
-              killPlayer(gameData, getPlayerByCharacterName(character.name))
+              killPlayer(
+                gameData,
+                getPlayerByCharacterName(character.name),
+                character.name
+              )
             "
             class="target-choices-button"
             :key="character.name"
@@ -93,6 +97,7 @@
         Which character do you wish to steal from?
         <div v-for="character in charactersArray" :key="character.name">
           <button
+            :disabled="character.name === gameData.deadCharacter"
             v-if="character.name !== 'Thief'"
             @click="
               markPlayerForTheft(
@@ -462,6 +467,7 @@ export default {
       "updatePlayerFromGameData",
       "updateInit",
       "updatePlayerToGameData",
+      "updateDeadCharacter",
     ]),
     ...mapGetters(["opponents"]),
     isCharacterDraftedOrBurned(character) {
@@ -703,7 +709,8 @@ export default {
         (player) => player.character.name == characterName
       );
     },
-    killPlayer(gameData, playerToKill) {
+    killPlayer(gameData, playerToKill, characterName) {
+      store.commit("updateDeadCharacter", characterName);
       let foundPlayer = gameData.players.find(
         (player) => player === playerToKill
       );

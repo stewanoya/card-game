@@ -13,6 +13,7 @@ export default createStore({
       players: [],
       currentTurn: undefined,
       initOrderOfPlayers: [],
+      deadCharacter: null,
     },
     initPlayerDetails: false,
     init: false,
@@ -54,6 +55,9 @@ export default createStore({
     },
   },
   mutations: {
+    updateDeadCharacter(state, characterName) {
+      state.gameData.deadCharacter = characterName;
+    },
     removeHost(state) {
       state.gameData.players.forEach((player) => (player.isHost = false));
     },

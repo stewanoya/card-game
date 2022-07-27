@@ -160,6 +160,7 @@ io.on("connection", (socket) => {
         districtsDeck: [],
         charactersDeck: [],
         gameStarted: false,
+        deadCharacter: null,
       };
       firstDraftRound = true;
       // TODO: Think of a better solution for no players in room.
