@@ -1,15 +1,5 @@
 <template>
   <div class="game-container">
-    <div class="player-info-container">
-      <h1>Username=</h1>
-      <span>{{ player.userName }}</span>
-      <hr />
-      <h1>Character</h1>
-      <h4>Name=</h4>
-      <span>{{
-        player.character ? player.character.name : "None Chosen Yet"
-      }}</span>
-    </div>
     <CommunityBuild
       :opponents="opponents"
       :transaction-handler="communityBuildTransaction"
@@ -340,29 +330,40 @@
         </draggable>
       </div>
     </div>
-    <draggable
-      :list="player.cards"
-      @start="canPlayDistrictHandler"
-      @end="drag = false"
-      class="districts-card-zone"
-      item-key="id"
-      ghost-class="ghost"
-      drag-class="card"
-      group="cards"
-    >
-      <template #item="{ element }">
-        <DistrictCard
-          :name="element.districtName"
-          :cost="element.cost"
-          :type="element.type"
-          :uniqueDescription="element.uniqueDescription"
-          ghost-class="ghost"
-          :key="element.id"
-          id="card"
-          class="card-in-hand"
-        />
-      </template>
-    </draggable>
+    <div class="bottom-screen">
+      <div class="player-info-container">
+        <h1 class="player-userName">{{ player.userName }}</h1>
+        <div class="profile-picture-container">
+          <img
+            class="profile-picture"
+            src="https://images.unsplash.com/photo-1621272036047-bb0f76bbc1ad?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1612&q=80"
+          />
+        </div>
+      </div>
+      <draggable
+        :list="player.cards"
+        @start="canPlayDistrictHandler"
+        @end="drag = false"
+        class="districts-card-zone"
+        item-key="id"
+        ghost-class="ghost"
+        drag-class="card"
+        group="cards"
+      >
+        <template #item="{ element }">
+          <DistrictCard
+            :name="element.districtName"
+            :cost="element.cost"
+            :type="element.type"
+            :uniqueDescription="element.uniqueDescription"
+            ghost-class="ghost"
+            :key="element.id"
+            id="card"
+            class="card-in-hand"
+          />
+        </template>
+      </draggable>
+    </div>
   </div>
 </template>
 
@@ -577,16 +578,16 @@ export default {
     canPlayDistrictHandler(card) {
       this.drag = true;
       this.cardCanBePlayed = false;
-      console.log("HERE IS USINGPOWER", this.isUsingPower);
-      const cardData = card.item.innerText.split("\n\n");
+      const cardData = card.item.innerText.split("\n");
       const cardCost = Number(cardData[0]);
       const cardName = cardData[1];
-      const cardType = cardData[2];
+      const cardType = cardData[3];
       let hasCardAlreadyBeenPlayed = this.hasCardAlreadyBeenPlayed(
         cardName,
         this.player
       );
       this.rememberCardCost = cardCost;
+      console.log("THIS IS CARD TYPE!!", cardType);
       // TODO: replace this crazy if statement with something more readable/maintainable
       if (
         this.player.gold >= cardCost &&
@@ -1016,7 +1017,8 @@ h2 {
   opacity: 0;
 }
 .districts-card-zone {
-  width: 100%;
+  margin-left: auto;
+  width: 90%;
   display: flex;
   padding: 15px;
   z-index: 1000;
@@ -1164,14 +1166,40 @@ h2 {
 }
 
 .player-info-container {
+  width: 100px;
+  height: 100px;
+  background-color: rgb(4, 2, 15);
+  border-radius: 100%;
+  position: relative;
+  margin-left: 10px;
+  border: 5px solid #452059;
+}
+.player-userName {
   position: absolute;
-  width: max-content;
-  right: 100px;
-  bottom: 100px;
+  left: 50%;
+  top: -25px;
+  transform: translate(-50%, 0);
+}
+.profile-picture {
+  width: 150px;
+  height: auto;
 }
 
+.profile-picture-container {
+  width: 100%;
+  height: 100%;
+  border-radius: 100%;
+  overflow: hidden;
+}
+.bottom-screen {
+  height: fit-content;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
 .card-in-hand {
-  margin-right: -2rem;
+  margin-right: -1.5rem;
   transition: margin-right 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 

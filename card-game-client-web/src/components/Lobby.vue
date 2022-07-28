@@ -29,6 +29,9 @@
 
 <script setup>
 import { NCard, NTag, NDropdown, NButton } from "naive-ui";
+import { onUnmounted } from "vue";
+
+onUnmounted(() => {});
 </script>
 
 <script>
@@ -40,14 +43,20 @@ export default {
     players: { type: Array, required: false, default: [] },
     socket: { type: Object, required: true },
   },
+  components: {
+    NCard,
+    NTag,
+    NDropdown,
+    NButton,
+  },
   data() {
     return {};
   },
   created() {
-    this.socket.on("updateGameData", (gameData) => {
+    this.socket.on("newHost", (gameData) => {
       store.commit("updateGameData", gameData);
       store.commit("updatePlayerFromGameData", gameData.players);
-      console.log("gamedata was updated!", this.gameData);
+      console.log("new host selected!", this.gameData);
     });
   },
   computed: {
@@ -76,7 +85,7 @@ export default {
       store.commit("removeHost");
       chosenPlayer.isHost = true;
       store.commit("updatePlayerToGameData", chosenPlayer);
-      this.socket.emit("updateGameData", this.gameData);
+      this.socket.emit("newHost", this.gameData);
     },
   },
 };

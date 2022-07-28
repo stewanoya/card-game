@@ -53,11 +53,20 @@ export default {
   name: "LobbyView",
   components: {
     Lobby,
+    NButton,
+    useMessage,
   },
   fetch() {
     this.connectPlayer();
   },
   computed: {
+    ...mapState(["socket", "player", "gameData"]),
+  },
+  methods: {
+    connectPlayer() {},
+    startGame() {
+      this.socket.emit("gameStart");
+    },
     ...mapMutations([
       "toggleInitPlayerDetails",
       "createNewPlayer",
@@ -66,13 +75,6 @@ export default {
       "updatePlayerFromGameData",
       "updateGameData",
     ]),
-    ...mapState(["socket", "player", "gameData"]),
-  },
-  methods: {
-    connectPlayer() {},
-    startGame() {
-      this.socket.emit("gameStart");
-    },
   },
 };
 </script>

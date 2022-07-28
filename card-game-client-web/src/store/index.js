@@ -8,6 +8,7 @@ export default createStore({
     socket: "",
     player: "",
     gameData: {
+      chats: [],
       districtsDeck: [],
       charactersDeck: [],
       players: [],

@@ -1,44 +1,69 @@
 <template>
   <div class="district-card">
     <div class="district-header">
-      <p>{{ cost }}</p>
-      <h5>{{ name }}</h5>
+      <div class="gold-coin-container">
+        <!-- We hide the cost, but still need to assess the cost before playing -->
+        <div class="gold-coin" v-for="index in costAsNumber" :key="index"></div>
+        <div class="hidden-cost">{{ cost }}</div>
+      </div>
+      <h5 class="ward-name">{{ name }}</h5>
     </div>
     <div class="card-body">
-      <p>{{ type }}</p>
+      <div class="card-type" :class="type"></div>
+      <!-- hidden for the same reason as cost -->
+      <p class="hidden-type">{{ type }}</p>
     </div>
-    <p class="unique-description" v-if="uniqueDescription">
+    <n-tooltip trigger="click" v-if="uniqueDescription">
+      <template #trigger>
+        <n-button class="info-button"> Special </n-button>
+      </template>
       {{ uniqueDescription }}
-    </p>
+    </n-tooltip>
   </div>
 </template>
 
+<script setup>
+import { NTooltip, NButton } from "naive-ui";
+</script>
 <script>
 export default {
+  components: {
+    NTooltip,
+    NButton,
+  },
   props: {
     name: { type: String, required: true },
     cost: { type: String, required: true },
     type: { type: String, required: true },
     uniqueDescription: { type: String, required: false },
   },
+  computed: {
+    costAsNumber() {
+      console.log("THIS IS COST!", this.cost);
+      return Number(this.cost);
+    },
+  },
 };
 </script>
 
 <style scoped>
 .district-card {
+  position: relative;
   width: 15%;
-  height: 12%;
-  background-color: rgb(230, 230, 230);
+  background-color: #fffef1;
   margin-inline: 5px;
   padding-inline: 20px;
-  min-height: 150px;
-  max-width: 150px;
-  min-width: 100px;
+  height: 200px;
+  max-width: 175px;
+  min-width: 150px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  border: 2px solid black;
+  justify-content: center;
+  align-items: center;
+  border: 5px solid rgb(1, 1, 8);
   border-radius: 10px;
+  overflow: hidden;
+  z-index: 2;
 }
 
 .card-body {
@@ -49,14 +74,88 @@ export default {
   display: flex;
   width: 100%;
   align-items: center;
-  justify-content: space-between;
+  justify-content: end;
 }
 
 .unique-description {
   font-size: 11px;
   text-align: left;
+  width: 100px;
   overflow-y: auto;
   overflow-x: hidden;
-  max-height: 50px;
+  max-height: 75px;
+  padding: 5px;
+  background-color: #e4e4e4;
+  z-index: 2;
+}
+
+.gold-coin-container {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 10px;
+  left: 5px;
+  height: 100%;
+}
+
+.gold-coin {
+  min-width: 20px;
+  min-height: 20px;
+  border-radius: 100%;
+  background-color: #f2ea29;
+  border: 1px solid #ffc700;
+  margin-top: -5px;
+}
+.hidden-cost {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.hidden-type {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.ward-name {
+  position: absolute;
+  top: 5px;
+  right: 10px;
+  font-size: 14px;
+}
+
+.card-type {
+  position: absolute;
+  width: 200px;
+  height: 25px;
+  bottom: 30px;
+  left: 10px;
+  transform: rotate(-35deg);
+  box-shadow: 0px 2px 0px rgba(0, 0, 0, 0.25);
+}
+
+.red {
+  background-color: red;
+}
+
+.green {
+  background-color: green;
+}
+
+.blue {
+  background-color: blue;
+}
+
+.yellow {
+  background-color: yellow;
+}
+
+.purple {
+  background-color: purple;
+}
+
+.info-button {
+  border-radius: 10px;
+  position: absolute;
+  font-size: 12px;
 }
 </style>

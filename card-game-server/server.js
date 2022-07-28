@@ -137,6 +137,11 @@ io.on("connection", (socket) => {
     io.emit("draftRound", gameData);
   });
 
+  socket.on("newHost", (newGameData) => {
+    gameData = { ...newGameData };
+    io.emit("newHost", gameData);
+  });
+
   socket.on("districtPlayed", (newGameData) => {
     gameData = { ...newGameData };
     io.emit("updateGameData", gameData);
