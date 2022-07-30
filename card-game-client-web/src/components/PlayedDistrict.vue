@@ -27,7 +27,7 @@ export default {
 <style scoped>
 .district-card {
   width: 15%;
-  height: 10%;
+  height: 95%;
   background-color: rgb(230, 230, 230);
   margin-inline: 5px;
   padding-inline: 5px;

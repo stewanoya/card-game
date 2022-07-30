@@ -302,12 +302,6 @@
       <div class="big-gold-coin"></div>
       <span class="ml-2">{{ player.gold }}</span>
     </div>
-    <h5 class="current-turn">
-      Current Turn:
-      {{
-        gameData.currentTurn == player.userName ? "You" : gameData.currentTurn
-      }}
-    </h5>
     <div class="game-table-container">
       <div class="game-table">
         <div class="districts-deck">
@@ -325,8 +319,6 @@
           :list="player.districts"
           ghost-class="played-ghost"
         >
-          <!--           :class="drag ? 'bring-to-top' : ''"
- -->
           <template #item="{ element }">
             <PlayedDistrict
               :name="element.districtName"
@@ -1066,18 +1058,20 @@ h2 {
 }
 
 .game-table {
-  width: 100%;
+  width: 80%;
   height: 75%;
+  position: relative;
   background-color: gray;
-  border-radius: 100%;
+  border-radius: 20px;
+  margin: 0 auto;
 }
 
 .game-table-container {
   width: 100%;
-  height: 50%;
+  height: 70%;
   padding-inline: 15px;
   position: absolute;
-  bottom: 125px;
+  bottom: 80px;
 }
 
 .resource-button {
@@ -1133,14 +1127,16 @@ h2 {
 }
 
 .player-played-zone {
-  width: 35%;
-  height: 15%;
+  width: 50%;
+  height: 20%;
   background-color: rgb(223, 223, 223);
   position: absolute;
-  bottom: 40%;
-  left: 30%;
-  transform: perspective(5px) rotateX(1deg);
+  bottom: 20px;
+  left: 50%;
+  transform: translate(-50%, 0);
   display: flex;
+  padding-inline: 10px;
+  align-items: center;
 }
 
 .ghost {
@@ -1185,7 +1181,10 @@ h2 {
 }
 
 .districts-deck {
-  padding-top: 90px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .character-card:hover {
