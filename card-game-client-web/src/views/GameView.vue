@@ -6,40 +6,38 @@
       :districtPlayed="districtPlayed"
       v-if="showCommunityBuildingScreen"
     />
-    <div class="player-crown-container" v-if="player.isKing">
-      <div class="player-crown">
-        <svg
-          class="crown"
-          xmlns="http://www.w3.org/2000/svg"
-          xmlns:xlink="http://www.w3.org/1999/xlink"
-          version="1.1"
-          id="Capa_1"
-          x="0px"
-          y="0px"
-          viewBox="0 0 220 220"
-          style="enable-background: new 0 0 220 220"
-          xml:space="preserve"
-        >
-          <path
-            d="M220,98.865c0-12.728-10.355-23.083-23.083-23.083s-23.083,10.355-23.083,23.083c0,5.79,2.148,11.084,5.681,15.14  l-23.862,21.89L125.22,73.002l17.787-20.892l-32.882-38.623L77.244,52.111l16.995,19.962l-30.216,63.464l-23.527-21.544  c3.528-4.055,5.671-9.344,5.671-15.128c0-12.728-10.355-23.083-23.083-23.083C10.355,75.782,0,86.137,0,98.865  c0,11.794,8.895,21.545,20.328,22.913l7.073,84.735H192.6l7.073-84.735C211.105,120.41,220,110.659,220,98.865z"
-          />
-          <g></g>
-          <g></g>
-          <g></g>
-          <g></g>
-          <g></g>
-          <g></g>
-          <g></g>
-          <g></g>
-          <g></g>
-          <g></g>
-          <g></g>
-          <g></g>
-          <g></g>
-          <g></g>
-          <g></g>
-        </svg>
-      </div>
+    <div class="player-crown" v-if="player.isKing">
+      <svg
+        class="crown"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        version="1.1"
+        id="Capa_1"
+        x="0px"
+        y="0px"
+        viewBox="0 0 220 220"
+        style="enable-background: new 0 0 220 220"
+        xml:space="preserve"
+      >
+        <path
+          d="M220,98.865c0-12.728-10.355-23.083-23.083-23.083s-23.083,10.355-23.083,23.083c0,5.79,2.148,11.084,5.681,15.14  l-23.862,21.89L125.22,73.002l17.787-20.892l-32.882-38.623L77.244,52.111l16.995,19.962l-30.216,63.464l-23.527-21.544  c3.528-4.055,5.671-9.344,5.671-15.128c0-12.728-10.355-23.083-23.083-23.083C10.355,75.782,0,86.137,0,98.865  c0,11.794,8.895,21.545,20.328,22.913l7.073,84.735H192.6l7.073-84.735C211.105,120.41,220,110.659,220,98.865z"
+        />
+        <g></g>
+        <g></g>
+        <g></g>
+        <g></g>
+        <g></g>
+        <g></g>
+        <g></g>
+        <g></g>
+        <g></g>
+        <g></g>
+        <g></g>
+        <g></g>
+        <g></g>
+        <g></g>
+        <g></g>
+      </svg>
     </div>
     <OpponentsContainer
       :opponents="opponents"
@@ -47,15 +45,20 @@
       :destructionComplete="destructionComplete"
     />
     <div class="gather-card-container" v-if="resourceGatherCards.length == 2">
-      <DistrictCard
-        v-for="card in resourceGatherCards"
-        :name="card.districtName"
-        :type="card.type"
-        :cost="card.cost"
-        :key="card.id"
-        :uniqueDescription="card.uniqueDescription"
-        @click="gatherCardSelected(card)"
-      />
+      <h1 style="font-size: 24px; font-weight: bold; color: white">
+        Double tap the card you want!
+      </h1>
+      <div style="display: flex">
+        <DistrictCard
+          v-for="card in resourceGatherCards"
+          :name="card.districtName"
+          :type="card.type"
+          :cost="card.cost"
+          :key="card.id"
+          :uniqueDescription="card.uniqueDescription"
+          @dblclick="gatherCardSelected(card)"
+        />
+      </div>
     </div>
     <div class="use-power-container" v-if="showPowerScreen && !powerUsed">
       <!-- power screen can be it's own component -->
@@ -246,19 +249,21 @@
         !showCharacterCards
       "
     >
-      <button @click="endTurnHandler">End Turn</button>
+      <n-button @click="endTurnHandler" type="error">End Turn</n-button>
     </div>
     <div
       class="use-power-button-container"
       v-if="gameData.currentTurn == player.userName && !showCharacterCards"
     >
-      <button
+      <n-button
+        class="use-power-button"
+        color="#452059"
         v-if="!gatherResources"
         @click="showPowerScreenHandler"
         :disabled="powerUsed"
       >
         Use Power
-      </button>
+      </n-button>
     </div>
     <button
       v-if="isDestroying"
@@ -293,7 +298,10 @@
       />
     </div>
 
-    <h3 class="player-gold">Gold: {{ player.gold }}</h3>
+    <div class="player-gold">
+      <div class="big-gold-coin"></div>
+      <span class="ml-2">{{ player.gold }}</span>
+    </div>
     <h5 class="current-turn">
       Current Turn:
       {{
@@ -363,9 +371,25 @@
           />
         </template>
       </draggable>
+      <div class="chosen-character" v-if="player.character.name">
+        <n-tooltip
+          trigger="click"
+          style="width: 300px; z-index: 99999999 !important"
+        >
+          <template #trigger>
+            <n-button class="info-button" type="info"> i </n-button>
+          </template>
+          {{ player.character.jobDescription }}
+        </n-tooltip>
+        {{ player.character.name }}
+      </div>
     </div>
   </div>
 </template>
+
+<script setup>
+import { NButton, NTooltip } from "naive-ui";
+</script>
 
 <script>
 import store from "@/store";
@@ -383,7 +407,6 @@ import {
   CHARACTER_VALUES_8,
 } from "@/helpers/characterDeck";
 import OpponentsContainer from "@/components/OpponentsContainer.vue";
-
 export default {
   data() {
     return {
@@ -457,6 +480,8 @@ export default {
     CharacterCard,
     OpponentsContainer,
     CommunityBuild,
+    NButton,
+    NTooltip,
   },
   computed: {
     ...mapState(["socket", "player", "gameData", "init"]),
@@ -937,6 +962,10 @@ export default {
 </script>
 
 <style scoped>
+.ml-2 {
+  margin-left: 10px;
+}
+
 .close-power-screen {
   z-index: 10000;
   background-color: red;
@@ -997,6 +1026,7 @@ h2 {
 
 .gather-card-container {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   width: 100%;
@@ -1025,9 +1055,14 @@ h2 {
 }
 
 .player-gold {
+  display: flex;
+  align-items: center;
   position: absolute;
-  right: 25px;
-  bottom: 175px;
+  right: 165px;
+  bottom: 22px;
+  font-size: 24px;
+  z-index: 99999;
+  font-weight: bold;
 }
 
 .game-table {
@@ -1050,35 +1085,38 @@ h2 {
   height: 60%;
   margin: 15px;
 }
-.player-crown-container {
-  width: 100%;
-  height: 100%;
-}
 
 .player-crown {
-  width: 10%;
-  height: 10%;
+  width: 50px;
+  height: 50px;
   position: absolute;
-  right: 0;
-  bottom: 8%;
+  left: 35px;
+  bottom: 190px;
+  z-index: 99999999;
 }
 .crown {
-  width: 75%;
-  height: 75%;
+  width: 100%;
+  height: 100%;
 }
 .end-turn-container {
   position: absolute;
   right: 25px;
-  bottom: 140px;
-  z-index: 100000;
+  bottom: 25px;
+  z-index: 9999;
 }
 .use-power-button-container {
   position: absolute;
   right: 25px;
-  bottom: 50px;
+  bottom: 70px;
   z-index: 100000;
+  width: fit-content;
 }
-
+.use-power-button {
+  width: 200px;
+  height: 60px;
+  border: 2px solid #380256;
+  font-size: 28px;
+}
 .gather-resources-container {
   position: absolute;
   background-color: rgba(48, 48, 48, 0.534);
@@ -1119,9 +1157,7 @@ h2 {
   top: 0;
   left: 0;
 }
-.grabbing * {
-  cursor: grabbing !important;
-}
+
 .choose-title {
   position: absolute;
   top: 2%;
@@ -1138,7 +1174,6 @@ h2 {
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  z-index: 10;
   z-index: 99999;
 }
 .hide-card {
@@ -1198,6 +1233,42 @@ h2 {
   align-items: center;
   position: relative;
 }
+
+.big-gold-coin {
+  width: 40px;
+  height: 40px;
+  border-radius: 100%;
+  background-color: #f2ea29;
+  border: 1px solid #ffc700;
+}
+
+.chosen-character {
+  width: 200px;
+  font-size: 24px;
+  color: white;
+  height: 50px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #45205973;
+  margin-right: 6rem;
+  position: absolute;
+  right: -70px;
+  bottom: 140px;
+  border: 3px solid rgb(3, 1, 10);
+  border-radius: 5px;
+  padding: 5px;
+  z-index: 100000;
+}
+
+.info-button {
+  margin-right: 10px;
+  border-radius: 100%;
+  width: 30px;
+  height: 30px;
+}
+
 .card-in-hand {
   margin-right: -1.5rem;
   transition: margin-right 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);

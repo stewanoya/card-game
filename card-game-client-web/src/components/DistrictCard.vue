@@ -13,8 +13,13 @@
       <!-- hidden for the same reason as cost -->
       <p class="hidden-type">{{ type }}</p>
     </div>
-    <n-tooltip trigger="click" v-if="uniqueDescription">
-      <template #trigger>
+    <n-tooltip
+      class="unique-description"
+      trigger="click"
+      style="width: 300px"
+      v-if="uniqueDescription"
+    >
+      <template #trigger class="unique-description">
         <n-button class="info-button"> Special </n-button>
       </template>
       {{ uniqueDescription }}
@@ -60,9 +65,11 @@ export default {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  border: 5px solid rgb(1, 1, 8);
+  border: 3px solid rgb(1, 1, 8);
   border-radius: 10px;
   overflow: hidden;
+  box-shadow: 0px 2px 0px rgba(0, 0, 0, 0.25);
+  cursor: grab;
   z-index: 2;
 }
 
@@ -157,5 +164,9 @@ export default {
   border-radius: 10px;
   position: absolute;
   font-size: 12px;
+  z-index: 1000;
+}
+.n-popover__content {
+  max-width: 200px !important;
 }
 </style>
