@@ -41,10 +41,13 @@
 
       <p>{{ userName }}</p>
       <h3 v-if="gameData.currentTurn === userName && !character">Drafting..</h3>
-    </div>
-    <div class="details-container">
-      <p>Cards: {{ cards.length }}</p>
-      <p>Gold: {{ gold }}</p>
+      <div
+        class="details-container"
+        :class="{ 'reverse-details-container': index === opponentsLength - 1 }"
+      >
+        <p>Cards: {{ cards.length }}</p>
+        <p>Gold: {{ gold }}</p>
+      </div>
     </div>
     <div class="opponent-played-zone" :class="doesDropZoneNeedRotation">
       <OpponentPlayedDistrict
@@ -54,7 +57,9 @@
         :cost="element.cost"
         :key="element.id"
         class="flip-over opponent-played-card"
-        :class="{ 'red-glow': isDestroying }"
+        :class="{
+          'red-glow': isDestroying,
+        }"
         @click="destroyCardHandler(element, userName)"
       />
     </div>
@@ -91,7 +96,7 @@ export default {
     ...mapMutations(["destroyPlayedCard"]),
     doesDropZoneNeedRotation() {
       // only need to rotate the first and last dropzones if there are 2 or more opponents
-      if (this.opponentsLength > 1) {
+      if (this.opponentsLength > 2) {
         if (this.index === 0) {
           return "first-child-rotation";
         }
@@ -127,14 +132,16 @@ h3 {
   position: relative;
   display: flex;
   justify-content: center;
+  z-index: 10;
 }
 
 .avatar {
+  position: relative;
   height: 100%;
   min-width: 100px;
   min-height: 100px;
-  max-height: 250px;
-  max-width: 250px;
+  max-height: 125px;
+  max-width: 125px;
   aspect-ratio: 1;
   border-radius: 100%;
   background-color: rgb(224, 227, 255);
@@ -155,17 +162,20 @@ h3 {
   bottom: 0;
 }
 .opponent-played-zone {
-  width: 100%;
-  height: 30%;
+  width: 95%;
+  max-width: 250px;
+  min-height: 70px;
   max-height: 40px;
-  background-color: rgb(223, 223, 223);
+  background: rgba(217, 217, 217, 0.35);
+  border: 5px solid #111420;
+  box-shadow: 0px 4px 4px #000000;
   position: absolute;
-  top: 160%;
-  left: 0;
-  transform: perspective(10px) rotateX(5deg);
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, 200%);
   display: flex;
   align-items: center;
-  z-index: 1000;
+  z-index: 10;
 }
 
 .flip-over {
@@ -197,17 +207,25 @@ h3 {
 }
 
 .first-child-rotation {
+  transform: rotate(-90deg) translate(-25%, 50%);
 }
 
 .last-child-rotation {
+  transform: rotate(90deg) translate(25%, 340%);
 }
 
 .details-container {
   position: absolute;
-  right: 0px;
+  right: -55px;
+  top: 0;
+  z-index: 100;
+  color: white;
+}
+
+.reverse-details-container {
+  left: 0;
 }
 
 .opponent-played-card {
-  height: 80%;
 }
 </style>

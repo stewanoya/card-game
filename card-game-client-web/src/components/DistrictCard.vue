@@ -58,7 +58,7 @@ export default {
   background-color: #fffef1;
   margin-inline: 5px;
   padding-inline: 20px;
-  height: 200px;
+  height: 175px;
   max-width: 175px;
   min-width: 150px;
   display: flex;

@@ -104,23 +104,26 @@ export default {
 }
 
 .three-player-positioning--item {
-  margin-top: 80px;
+  margin-top: 60px;
 }
 
 .six-player-positioning {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   grid-template-rows: 1fr 1fr;
-  width: 100%;
+  width: 80%;
   height: 100%;
 }
 
 .six-player-positioning--item:first-child {
-  margin-top: 65px;
+  grid-row-start: 2;
+  transform: translate(-5%, 20%);
 }
 
 .six-player-positioning--item:last-child {
-  margin-top: 65px;
+  grid-row-start: 2;
+  grid-column-start: 3;
+  transform: translate(200%, 20%);
 }
 .two-player-positioning--item {
   margin-top: 50px;
@@ -129,5 +132,6 @@ export default {
 .six-player-positioning--item {
   width: 60%;
   height: 60%;
+  transform: translate(100%, 60%);
 }
 </style>

@@ -26,12 +26,12 @@ export default {
 
 <style scoped>
 .district-card {
-  width: 15%;
-  height: 10%;
+  width: 20%;
+  height: 100%;
   background-color: rgb(230, 230, 230);
   margin-inline: 5px;
   padding-inline: 5px;
-  min-height: 30px;
+  min-height: 50px;
   max-width: 150px;
   display: flex;
   flex-direction: column;

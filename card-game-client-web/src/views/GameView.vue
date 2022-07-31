@@ -39,11 +39,7 @@
         <g></g>
       </svg>
     </div>
-    <OpponentsContainer
-      :opponents="opponents"
-      :isDestroying="isDestroying"
-      :destructionComplete="destructionComplete"
-    />
+
     <div class="gather-card-container" v-if="resourceGatherCards.length == 2">
       <h1 style="font-size: 24px; font-weight: bold; color: white">
         Double tap the card you want!
@@ -303,6 +299,12 @@
       <span class="ml-2">{{ player.gold }}</span>
     </div>
     <div class="game-table-container">
+      <OpponentsContainer
+        :opponents="opponents"
+        :isDestroying="isDestroying"
+        :destructionComplete="destructionComplete"
+        class="absolute"
+      />
       <div class="game-table">
         <div class="districts-deck">
           Deck: <strong>{{ gameData.districtsDeck.length }}</strong>
@@ -954,6 +956,11 @@ export default {
 </script>
 
 <style scoped>
+.absolute {
+  position: absolute;
+  top: -40%;
+  left: -2%;
+}
 .ml-2 {
   margin-left: 10px;
 }
@@ -1033,6 +1040,7 @@ h2 {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  overflow: hidden;
 }
 
 .played-ghost {
@@ -1058,11 +1066,14 @@ h2 {
 }
 
 .game-table {
-  width: 80%;
-  height: 75%;
+  width: 75%;
+  height: 65%;
   position: relative;
-  background-color: gray;
-  border-radius: 20px;
+  background-color: #2a2a42;
+  border: 7px solid rgba(165, 165, 165, 0.19);
+  box-shadow: 0px 13px 4px rgba(0, 0, 0, 0.25),
+    inset 0px 21px 4px rgba(0, 0, 0, 0.25);
+  border-radius: 25px;
   margin: 0 auto;
 }
 
@@ -1071,7 +1082,7 @@ h2 {
   height: 70%;
   padding-inline: 15px;
   position: absolute;
-  bottom: 80px;
+  bottom: 20px;
 }
 
 .resource-button {
@@ -1128,8 +1139,10 @@ h2 {
 
 .player-played-zone {
   width: 50%;
-  height: 20%;
-  background-color: rgb(223, 223, 223);
+  height: 30%;
+  background: rgba(217, 217, 217, 0.35);
+  border: 5px solid #111420;
+  box-shadow: 0px 4px 4px #000000;
   position: absolute;
   bottom: 20px;
   left: 50%;
