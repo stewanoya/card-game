@@ -25,7 +25,7 @@ const districtDataRAW = `Quantity,Name,Value,Type
 1,School of Magic,6,purple
 1,Library,6,purple
 1,Great Wall,6,purple
-1,University,8,purple
+1,University,6,purple
 1,Dragon Gate,8,purple`;
 // const districtsDataPath = "./assets/DEFAULT_DISTRICTS.txt";
 

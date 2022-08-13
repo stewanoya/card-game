@@ -27,11 +27,10 @@ export default {
 <style scoped>
 .district-card {
   width: 20%;
-  height: 100%;
   background-color: rgb(230, 230, 230);
   margin-inline: 5px;
   padding-inline: 5px;
-  min-height: 50px;
+  min-height: 70px;
   max-width: 150px;
   display: flex;
   flex-direction: column;

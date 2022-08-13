@@ -94,8 +94,6 @@ export default {
   /* TODO: Set max-width and min-width */
 }
 .two-player-positioning {
-  display: flex;
-  justify-content: center;
 }
 
 .three-player-positioning {
@@ -104,34 +102,38 @@ export default {
 }
 
 .three-player-positioning--item {
-  margin-top: 60px;
+  margin-top: -130px;
 }
 
 .six-player-positioning {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  width: 80%;
-  height: 100%;
+  grid-template-rows: 1fr 1fr 1fr;
+  position: relative;
 }
 
 .six-player-positioning--item:first-child {
-  grid-row-start: 2;
-  transform: translate(-5%, 20%);
+  grid-row-start: 3;
+  top: -90px;
+  left: -70%;
 }
 
 .six-player-positioning--item:last-child {
-  grid-row-start: 2;
+  grid-row-start: 3;
   grid-column-start: 3;
-  transform: translate(200%, 20%);
+  top: -90px;
+
+  right: -65%;
 }
 .two-player-positioning--item {
-  margin-top: 50px;
+  position: absolute;
+  left: 50%;
+  top: -130px;
+  transform: translate(-50%, 0);
 }
 
 .six-player-positioning--item {
-  width: 60%;
-  height: 60%;
-  transform: translate(100%, 60%);
+  top: -130px;
+  width: 100%;
 }
 </style>

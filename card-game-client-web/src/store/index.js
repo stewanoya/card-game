@@ -15,6 +15,8 @@ export default createStore({
       currentTurn: undefined,
       initOrderOfPlayers: [],
       deadCharacter: null,
+      gameStarted: false,
+      finalTurn: false,
     },
     initPlayerDetails: false,
     init: false,
@@ -56,6 +58,9 @@ export default createStore({
     },
   },
   mutations: {
+    setFinalTurn(state) {
+      state.gameData.finalTurn = true;
+    },
     updateDeadCharacter(state, characterName) {
       state.gameData.deadCharacter = characterName;
     },

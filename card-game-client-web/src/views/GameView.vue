@@ -237,26 +237,29 @@
       </div>
     </div>
 
-    <div
-      class="end-turn-container"
-      v-if="
-        !gatherResources &&
-        gameData.currentTurn == player.userName &&
-        !showCharacterCards
-      "
-    >
-      <n-button @click="endTurnHandler" type="error">End Turn</n-button>
+    <div class="end-turn-container">
+      <n-button
+        @click="endTurnHandler"
+        type="error"
+        :disabled="
+          gatherResources ||
+          gameData.currentTurn !== player.userName ||
+          showCharacterCards
+        "
+        >End Turn</n-button
+      >
     </div>
-    <div
-      class="use-power-button-container"
-      v-if="gameData.currentTurn == player.userName && !showCharacterCards"
-    >
+    <div class="use-power-button-container">
       <n-button
         class="use-power-button"
         color="#452059"
-        v-if="!gatherResources"
         @click="showPowerScreenHandler"
-        :disabled="powerUsed"
+        :disabled="
+          powerUsed ||
+          gatherResources ||
+          gameData.currentTurn !== player.userName ||
+          showCharacterCards
+        "
       >
         Use Power
       </n-button>
@@ -299,13 +302,12 @@
       <span class="ml-2">{{ player.gold }}</span>
     </div>
     <div class="game-table-container">
-      <OpponentsContainer
-        :opponents="opponents"
-        :isDestroying="isDestroying"
-        :destructionComplete="destructionComplete"
-        class="absolute"
-      />
       <div class="game-table">
+        <OpponentsContainer
+          :opponents="opponents"
+          :isDestroying="isDestroying"
+          :destructionComplete="destructionComplete"
+        />
         <div class="districts-deck">
           Deck: <strong>{{ gameData.districtsDeck.length }}</strong>
         </div>
@@ -431,6 +433,9 @@ export default {
       store.commit("updateGameData", gameData);
       this.draftRound();
     });
+    this.socket.on("finalScores", (finalGameData) => {
+      console.log("THIS WOULD CALCULATE FINAL SCORES!", finalGameData);
+    });
 
     this.socket.on("updateGameData", (gameData) => {
       store.commit("updateGameData", gameData);
@@ -488,6 +493,7 @@ export default {
       "updateInit",
       "updatePlayerToGameData",
       "updateDeadCharacter",
+      "setFinalTurn",
     ]),
     ...mapGetters(["opponents"]),
     isCharacterDraftedOrBurned(character) {
@@ -606,7 +612,6 @@ export default {
         this.player
       );
       this.rememberCardCost = cardCost;
-      console.log("THIS IS CARD TYPE!!", cardType);
       // TODO: replace this crazy if statement with something more readable/maintainable
       if (
         this.player.gold >= cardCost &&
@@ -623,6 +628,12 @@ export default {
       this.districtPlayed = true;
       this.player.gold -= this.rememberCardCost;
       this.isPlayerArchitect();
+      // is 6 because starts counting from 0 - will be 7 cards
+      if (this.player.districts.length === 6) {
+        // TODO: FIGURE OUT WHY THIS ISNT WORKING
+        this.districtPlayed = true;
+        store.commit("setFinalTurn");
+      }
       store.commit("updatePlayerToGameData", this.player);
       store.commit("updateGameData", this.gameData);
       this.socket.emit("districtPlayed", this.gameData);
@@ -699,6 +710,7 @@ export default {
     },
 
     gatherGoldHandler() {
+      console.log("IN HERE!");
       this.gatherResources = false;
       this.player.gold += 2;
       store.commit("updatePlayerToGameData", this.player);
@@ -1138,9 +1150,9 @@ h2 {
 }
 
 .player-played-zone {
-  width: 50%;
+  width: 60%;
   height: 30%;
-  background: rgba(217, 217, 217, 0.35);
+  background: rgba(241, 241, 241, 0.836);
   border: 5px solid #111420;
   box-shadow: 0px 4px 4px #000000;
   position: absolute;

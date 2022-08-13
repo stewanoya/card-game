@@ -1,5 +1,8 @@
 <template>
-  <div class="opponent-container--item">
+  <div
+    class="opponent-container--item"
+    :class="{ 'reverse-container': index === opponentsLength - 1 }"
+  >
     <div class="crown-container" v-if="isKing">
       <svg
         class="crown"
@@ -35,7 +38,9 @@
     </div>
     <div
       class="avatar"
-      :class="gameData.currentTurn === userName ? 'turn-indicator' : ''"
+      :class="{
+        'turn-indicator': gameData.currentTurn === userName,
+      }"
     >
       <h5 v-if="gameData.currentTurn === userName">{{ character }}</h5>
 
@@ -48,20 +53,20 @@
         <p>Cards: {{ cards.length }}</p>
         <p>Gold: {{ gold }}</p>
       </div>
-    </div>
-    <div class="opponent-played-zone" :class="doesDropZoneNeedRotation">
-      <OpponentPlayedDistrict
-        v-for="element in playedCards"
-        :name="element.districtName"
-        :type="element.type"
-        :cost="element.cost"
-        :key="element.id"
-        class="flip-over opponent-played-card"
-        :class="{
-          'red-glow': isDestroying,
-        }"
-        @click="destroyCardHandler(element, userName)"
-      />
+      <div class="opponent-played-zone" :class="doesDropZoneNeedRotation">
+        <OpponentPlayedDistrict
+          v-for="element in playedCards"
+          :name="element.districtName"
+          :type="element.type"
+          :cost="element.cost"
+          :key="element.id"
+          class="flip-over opponent-played-card"
+          :class="{
+            'red-glow': isDestroying,
+          }"
+          @click="destroyCardHandler(element, userName)"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -127,12 +132,15 @@ h3 {
   font-weight: bold;
 }
 .opponent-container--item {
-  width: fit-content;
+  width: 100%;
   height: 100%;
   position: relative;
   display: flex;
   justify-content: center;
   z-index: 10;
+}
+
+.reverse-container {
 }
 
 .avatar {
@@ -162,15 +170,14 @@ h3 {
   bottom: 0;
 }
 .opponent-played-zone {
-  width: 95%;
+  width: 300%;
   max-width: 250px;
-  min-height: 70px;
-  max-height: 40px;
+  min-height: 90px;
   background: rgba(217, 217, 217, 0.35);
   border: 5px solid #111420;
   box-shadow: 0px 4px 4px #000000;
   position: absolute;
-  top: 0;
+  top: -40px;
   left: 50%;
   transform: translate(-50%, 200%);
   display: flex;
@@ -207,11 +214,15 @@ h3 {
 }
 
 .first-child-rotation {
-  transform: rotate(-90deg) translate(-25%, 50%);
+  transform: rotate(-90deg);
+  left: 100%;
+  top: 0;
 }
 
 .last-child-rotation {
-  transform: rotate(90deg) translate(25%, 340%);
+  transform: rotate(90deg);
+  left: -210%;
+  top: 0;
 }
 
 .details-container {
@@ -220,10 +231,6 @@ h3 {
   top: 0;
   z-index: 100;
   color: white;
-}
-
-.reverse-details-container {
-  left: 0;
 }
 
 .opponent-played-card {

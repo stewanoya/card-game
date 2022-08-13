@@ -95,6 +95,11 @@ io.on("connection", (socket) => {
       ];
 
     if (nextPlayerTurn === undefined) {
+      if (gameData.finalTurn) {
+        console.log("EMITTING FINAL SCORES");
+        io.emit("finalScores", gameData);
+        return;
+      }
       gameData.players = [...sortPlayersByKing(gameData.players)];
       io.emit("allPlayerTurnsCompleted", gameData);
       return;
@@ -159,13 +164,15 @@ io.on("connection", (socket) => {
     io.emit("disconnectedPlayer", gameData.players);
     if (gameData.players.length == 0) {
       gameData = {
-        players: [],
-        host: "",
-        currentTurn: undefined,
+        chats: [],
         districtsDeck: [],
         charactersDeck: [],
-        gameStarted: false,
+        players: [],
+        currentTurn: undefined,
+        initOrderOfPlayers: [],
         deadCharacter: null,
+        finalTurn: false,
+        gameStarted: false,
       };
       firstDraftRound = true;
       // TODO: Think of a better solution for no players in room.

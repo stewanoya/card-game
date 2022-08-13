@@ -54,13 +54,13 @@ export default {
 <style scoped>
 .district-card {
   position: relative;
-  width: 15%;
   background-color: #fffef1;
   margin-inline: 5px;
   padding-inline: 20px;
   height: 175px;
-  max-width: 175px;
-  min-width: 150px;
+  max-width: 150px;
+  min-width: 100px;
+  width: 15%;
   display: flex;
   flex-direction: column;
   justify-content: center;
