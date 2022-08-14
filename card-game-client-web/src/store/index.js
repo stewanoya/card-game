@@ -17,6 +17,7 @@ export default createStore({
       deadCharacter: null,
       gameStarted: false,
       finalTurn: false,
+      finishedFirst: "",
     },
     initPlayerDetails: false,
     init: false,

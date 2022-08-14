@@ -329,6 +329,7 @@
               :type="element.type"
               :cost="element.cost"
               :key="element.id"
+              :uniqueDescription="element.uniqueDescription"
             />
           </template>
         </draggable>
@@ -419,6 +420,7 @@ export default {
       isDestroying: false,
       gotPlusOneGold: false,
       showCommunityBuildingScreen: false,
+      showFinalScores: false,
       canCollectByType: true,
       canDestroy: true,
       communityBuildCompleted: false,
@@ -433,6 +435,11 @@ export default {
       store.commit("updateGameData", gameData);
       this.draftRound();
     });
+
+    this.socket.on("finalTurn", () => {
+      console.log("now I would show final turn announcement");
+    });
+
     this.socket.on("finalScores", (finalGameData) => {
       console.log("THIS WOULD CALCULATE FINAL SCORES!", finalGameData);
     });
@@ -628,11 +635,15 @@ export default {
       this.districtPlayed = true;
       this.player.gold -= this.rememberCardCost;
       this.isPlayerArchitect();
-      // is 6 because starts counting from 0 - will be 7 cards
-      if (this.player.districts.length === 6) {
-        // TODO: FIGURE OUT WHY THIS ISNT WORKING
+      if (this.player.districts.length === 7) {
         this.districtPlayed = true;
-        store.commit("setFinalTurn");
+        if (this.gameData.finishedFirst === "") {
+          this.gameData.finishedFirst = this.player.userName;
+        }
+        if (!this.gameData.finalTurn) {
+          this.socket.emit("finalTurn");
+          store.commit("setFinalTurn");
+        }
       }
       store.commit("updatePlayerToGameData", this.player);
       store.commit("updateGameData", this.gameData);
@@ -710,7 +721,6 @@ export default {
     },
 
     gatherGoldHandler() {
-      console.log("IN HERE!");
       this.gatherResources = false;
       this.player.gold += 2;
       store.commit("updatePlayerToGameData", this.player);

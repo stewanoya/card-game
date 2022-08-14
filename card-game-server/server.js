@@ -34,6 +34,8 @@ let gameData = {
   districtsDeck: [],
   charactersDeck: [],
   gameStarted: false,
+  finalTurn: false,
+  finishedFirst: "",
 };
 let firstDraftRound = true;
 
@@ -86,6 +88,10 @@ io.on("connection", (socket) => {
     io.emit("draftRound", gameData);
   });
 
+  socket.on("finalTurn", () => {
+    io.emit("finalTurn");
+  });
+
   socket.on("turnEnded", (newGameData) => {
     gameData = newGameData;
     const nextPlayerTurn =
@@ -96,20 +102,19 @@ io.on("connection", (socket) => {
 
     if (nextPlayerTurn === undefined) {
       if (gameData.finalTurn) {
-        console.log("EMITTING FINAL SCORES");
         io.emit("finalScores", gameData);
         return;
       }
       gameData.players = [...sortPlayersByKing(gameData.players)];
       io.emit("allPlayerTurnsCompleted", gameData);
       return;
-      // I have to reset character deck
-      // I have to make sure all character booleans on players are reset
+      // I have to reset character deck - DONE
+      // I have to make sure all character booleans on players are reset - DONE
       // I have to find the king's original index - DONE
       // splice an array from the kings index to the end - DONE
       // and then from the beginning to the king spliced - DONE
       // and have the new player order be those ^ 2 arrays concat together - DONE.
-      // this can probably be it's own function - sortPlayersByKing
+      // this can probably be it's own function - sortPlayersByKing - DONE
     }
 
     gameData.currentTurn = nextPlayerTurn.userName;
@@ -173,6 +178,7 @@ io.on("connection", (socket) => {
         deadCharacter: null,
         finalTurn: false,
         gameStarted: false,
+        finishedFirst: "",
       };
       firstDraftRound = true;
       // TODO: Think of a better solution for no players in room.

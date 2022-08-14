@@ -44,7 +44,6 @@ export default {
   },
   computed: {
     costAsNumber() {
-      console.log("THIS IS COST!", this.cost);
       return Number(this.cost);
     },
   },

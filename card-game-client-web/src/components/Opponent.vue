@@ -59,10 +59,12 @@
           :name="element.districtName"
           :type="element.type"
           :cost="element.cost"
+          :uniqueDescription="element.uniqueDescription"
           :key="element.id"
           class="flip-over opponent-played-card"
           :class="{
-            'red-glow': isDestroying,
+            // cannot destroy completed city
+            'red-glow': isDestroying && playedCards.length !== 7,
           }"
           @click="destroyCardHandler(element, userName)"
         />
@@ -115,6 +117,11 @@ export default {
   methods: {
     destroyCardHandler(cardToDestroy, userName) {
       if (!this.isDestroying || this.player.gold < cardToDestroy.cost - 1) {
+        return;
+      }
+
+      if (this.playedCards.length === 7) {
+        //do nothing if completed city
         return;
       }
       const data = { cardToDestroy, userName };
@@ -171,7 +178,7 @@ h3 {
 }
 .opponent-played-zone {
   width: 300%;
-  max-width: 250px;
+  max-width: 300px;
   min-height: 90px;
   background: rgba(217, 217, 217, 0.35);
   border: 5px solid #111420;
