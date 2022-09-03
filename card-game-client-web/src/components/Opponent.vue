@@ -197,7 +197,27 @@ h3 {
 }
 
 .red-glow {
-  background-color: rgba(252, 0, 0, 0.411);
+  background-color: rgba(156, 4, 4, 0.644);
+  box-shadow: 0 0 0 0 rgb(143, 0, 0, 1);
+  transform: scale(1) rotate(180deg);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95) rotate(180deg);
+    box-shadow: 0 0 0 0 rgba(143, 0, 0, 0.7);
+  }
+
+  70% {
+    transform: scale(1) rotate(180deg);
+    box-shadow: 0 0 0 10px rgba(143, 0, 0, 0);
+  }
+
+  100% {
+    transform: scale(0.95) rotate(180deg);
+    box-shadow: 0 0 0 0 rgba(143, 0, 0, 0);
+  }
 }
 
 .red-glow:hover {

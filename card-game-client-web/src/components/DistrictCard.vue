@@ -109,7 +109,7 @@ export default {
   min-height: 20px;
   border-radius: 100%;
   background-color: #f2ea29;
-  border: 1px solid #ffc700;
+  border: 1px solid #bd9401;
   margin-top: -5px;
 }
 .hidden-cost {
@@ -132,8 +132,8 @@ export default {
 .card-type {
   position: absolute;
   width: 200px;
-  height: 25px;
-  bottom: 30px;
+  height: 70px;
+  bottom: -30px;
   left: 10px;
   transform: rotate(-35deg);
   box-shadow: 0px 2px 0px rgba(0, 0, 0, 0.25);

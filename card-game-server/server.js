@@ -28,6 +28,7 @@ const io = require("socket.io")(http, {
 const { v4: uuidv4 } = require("uuid");
 // could make it an array of objects to hold more data
 let gameData = {
+  chats: [],
   players: [],
   host: "",
   currentTurn: undefined,
@@ -106,6 +107,9 @@ io.on("connection", (socket) => {
         return;
       }
       gameData.players = [...sortPlayersByKing(gameData.players)];
+
+      // clear selected characters
+      gameData.players.forEach((player) => (player.character = {}));
       io.emit("allPlayerTurnsCompleted", gameData);
       return;
       // I have to reset character deck - DONE
@@ -158,15 +162,36 @@ io.on("connection", (socket) => {
   });
 
   // when someoen closes their window
-  socket.on("disconnect", () => {
+  socket.on("disconnect", (reason) => {
     let disconnectedPlayer = gameData.players.find(
       (player) => player.id == socket.id
     );
     console.log("A user disconnected " + disconnectedPlayer.userName);
-    gameData.players = gameData.players.filter(
-      (player) => player !== disconnectedPlayer
-    );
-    io.emit("disconnectedPlayer", gameData.players);
+    if (gameData.gameStarted === false) {
+      // if we're in lobby, we remove player from lobby and reset gameData players;
+      gameData.players = gameData.players.filter(
+        (player) => player !== disconnectedPlayer
+      );
+      io.emit("disconnectedPlayer", gameData.players);
+    }
+
+    if (gameData.gameStarted === true) {
+      // we need to somehow get player localData here.
+      // There must be a way to control what is sent on disconnect.
+      // ^ this might not be viable right now,
+
+      // check if all players have characters (aka it's action round)
+      if (
+        gameData.players.every((player) => Object.keys(character).length > 1)
+      ) {
+        // every player has character so we do next player turn if next player turn isnt undefined.
+        // if next player turn is undefined we call next draft round
+      }
+      // if player disconnects midturn, maybe end turn and move to next player
+      // that way I don't have to worry about local data
+      // should also check if there is a next turn, and if not, do next draft round or whatever it is.
+    }
+
     if (gameData.players.length == 0) {
       gameData = {
         chats: [],

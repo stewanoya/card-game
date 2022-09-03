@@ -74,12 +74,9 @@ export default createStore({
     toggleInitPlayerDetails(state, newStatus) {
       state.initPlayerDetails = newStatus;
     },
-    createNewPlayer(state) {
+    createNewPlayer(state, userName) {
       state.player = new Player();
-      state.player.userName = Math.random()
-        .toString(36)
-        .replace(/[^a-z]+/g, "")
-        .substr(0, 5);
+      state.player.userName = userName;
     },
     setSocket(state, socket) {
       state.socket = socket;

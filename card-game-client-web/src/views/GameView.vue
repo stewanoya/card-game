@@ -41,20 +41,19 @@
     </div>
 
     <div class="gather-card-container" v-if="resourceGatherCards.length == 2">
-      <h1 style="font-size: 24px; font-weight: bold; color: white">
-        Double tap the card you want!
-      </h1>
-      <div style="display: flex">
-        <DistrictCard
-          v-for="card in resourceGatherCards"
-          :name="card.districtName"
-          :type="card.type"
-          :cost="card.cost"
-          :key="card.id"
-          :uniqueDescription="card.uniqueDescription"
-          @dblclick="gatherCardSelected(card)"
-        />
-      </div>
+      <n-card title="Double tap your choice" class="gather-card">
+        <div style="display: flex; justify-content: space-around">
+          <DistrictCard
+            v-for="card in resourceGatherCards"
+            :name="card.districtName"
+            :type="card.type"
+            :cost="card.cost"
+            :key="card.id"
+            :uniqueDescription="card.uniqueDescription"
+            @dblclick="gatherCardSelected(card)"
+          />
+        </div>
+      </n-card>
     </div>
     <div class="use-power-container" v-if="showPowerScreen && !powerUsed">
       <!-- power screen can be it's own component -->
@@ -62,153 +61,229 @@
 
       <!-- ASSASSIN -->
       <div class="target-choices" v-if="draftedCharacterName === 'Assassin'">
-        Which character do you wish to kill?
-        <div v-for="character in charactersArray" :key="character.name">
-          <button
-            v-if="character.name !== 'Assassin'"
-            @click="
-              killPlayer(
-                gameData,
-                getPlayerByCharacterName(character.name),
-                character.name
-              )
-            "
-            class="target-choices-button"
-            :key="character.name"
-          >
-            {{ character.name }}
-          </button>
+        <h3 class="target-choices-title">
+          Which character do you wish to kill?
+        </h3>
+        <div class="flex flex-wrap justify-center">
+          <div v-for="character in charactersArray" :key="character.name">
+            <n-button
+              strong
+              round
+              color="#452059"
+              size="large"
+              v-if="character.name !== 'Assassin'"
+              @click="
+                killPlayer(
+                  gameData,
+                  getPlayerByCharacterName(character.name),
+                  character.name
+                )
+              "
+              class="target-choices-button"
+              :key="character.name"
+            >
+              {{ character.name }}
+            </n-button>
+          </div>
         </div>
       </div>
 
       <!-- THIEF -->
       <div class="target-choices" v-if="draftedCharacterName === 'Thief'">
-        Which character do you wish to steal from?
-        <div v-for="character in charactersArray" :key="character.name">
-          <button
-            :disabled="character.name === gameData.deadCharacter"
-            v-if="character.name !== 'Thief'"
-            @click="
-              markPlayerForTheft(
-                gameData,
-                getPlayerByCharacterName(character.name)
-              )
-            "
-            class="target-choices-button"
-          >
-            {{ character.name }}
-          </button>
+        <h3 class="target-choices-title">
+          Which character do you wish to steal from?
+        </h3>
+        <div class="flex flex-wrap justify-center">
+          <div v-for="character in charactersArray" :key="character.name">
+            <n-button
+              strong
+              round
+              color="#452059"
+              size="large"
+              :disabled="character.name === gameData.deadCharacter"
+              v-if="character.name !== 'Thief'"
+              @click="
+                markPlayerForTheft(
+                  gameData,
+                  getPlayerByCharacterName(character.name)
+                )
+              "
+              class="target-choices-button"
+            >
+              {{ character.name }}
+            </n-button>
+          </div>
         </div>
       </div>
       <!-- MAGICIAN-->
       <div class="target-choices" v-if="draftedCharacterName === 'Magician'">
-        Who will you exchange cards with?
-        <div v-for="opponent in opponents" :key="opponent.userName">
-          <button
-            @click="
-              tradeCards(
-                gameData,
-                getPlayerByCharacterName(opponent.character.name)
-              )
-            "
-            class="target-choices-button"
-          >
-            {{ opponent.userName }}
-          </button>
+        <h3 class="target-choices-title">Who will you exchange cards with?</h3>
+        <div class="flex flex-wrap justify-center">
+          <div v-for="opponent in opponents" :key="opponent.userName">
+            <n-button
+              round
+              strong
+              size="large"
+              color="#452059"
+              @click="
+                tradeCards(
+                  gameData,
+                  getPlayerByCharacterName(opponent.character.name)
+                )
+              "
+              class="target-choices-button"
+            >
+              {{ opponent.userName }}
+            </n-button>
+          </div>
         </div>
-        <h1>--OR--</h1>
-        <button
+        <n-button
+          style="width: 50%; margin: 0 auto"
+          round
+          strong
+          size="large"
+          type="info"
           @click="tradeCards(gameData, 'Deck')"
           class="target-choices-button"
         >
           Trade With Deck
-        </button>
+        </n-button>
       </div>
 
       <!-- KING -->
       <div class="target-choices" v-if="draftedCharacterName === 'King'">
-        <button
-          v-if="canCollectByType"
-          @click="collectGoldByType(draftedCharacterName)"
-          class="target-choices-button"
-        >
-          Collect Gold By Card Type
-        </button>
+        <div class="flex flex-wrap justify-center align-center">
+          <n-button
+            strong
+            size="large"
+            round
+            color="#452059"
+            v-if="canCollectByType"
+            @click="collectGoldByType(draftedCharacterName)"
+            class="target-choices-button"
+          >
+            +1 Gold for each yellow ward played
+          </n-button>
+        </div>
       </div>
 
       <!-- BISHOP -->
       <div class="target-choices" v-if="draftedCharacterName === 'Bishop'">
-        <button
-          v-if="canCollectByType"
-          @click="collectCardsByType(draftedCharacterName)"
-          class="target-choices-button"
-        >
-          Collect Cards by Card Type
-        </button>
-        <div>
-          <button
-            v-if="!communityBuildCompleted"
+        <h3 class="target-choices-title">Which power would you like to use?</h3>
+        <div class="flex flex-wrap justify-center align-center">
+          <n-button
+            strong
+            round
+            size="large"
+            color="#452059"
+            v-if="canCollectByType"
+            @click="collectCardsByType(draftedCharacterName)"
             class="target-choices-button"
-            @click="showCommunityBuildScreenHandler"
           >
-            Community Build
-          </button>
+            Collect Cards by Card Type
+          </n-button>
+          <div>
+            <n-button
+              color="#452059"
+              strong
+              round
+              size="large"
+              v-if="!communityBuildCompleted"
+              class="target-choices-button"
+              @click="showCommunityBuildScreenHandler"
+            >
+              Community Build
+            </n-button>
+          </div>
         </div>
       </div>
-
       <!-- MERCHANT -->
       <div class="target-choices" v-if="draftedCharacterName === 'Merchant'">
-        <button
-          v-if="canCollectByType"
-          @click="collectGoldByType(draftedCharacterName)"
-          class="target-choices-button"
-        >
-          Collect Gold By Card Type
-        </button>
-        <div>
-          <button
+        <h3 class="target-choices-title">Which power would you like to use?</h3>
+        <div class="flex flex-wrap justify-center align-center">
+          <n-button
+            strong
+            round
+            size="large"
+            color="#452059"
+            v-if="canCollectByType"
+            @click="collectGoldByType(draftedCharacterName)"
+            class="target-choices-button"
+          >
+            Collect Gold By Card Type
+          </n-button>
+          <n-button
+            strong
+            round
+            size="large"
+            color="#452059"
             v-if="!gotPlusOneGold"
             class="target-choices-button"
             @click="plusOneGold"
           >
             +1 Gold
-          </button>
+          </n-button>
         </div>
       </div>
 
       <!-- ARCHITECT -->
       <div class="target-choices" v-if="draftedCharacterName === 'Architect'">
-        <button @click="collectTwoCards" class="target-choices-button">
+        <n-button
+          strong
+          round
+          size="large"
+          color="#452059"
+          style="width: 50%; margin: 0 auto"
+          @click="collectTwoCards"
+          class="target-choices-button"
+        >
           Get +2 Cards
-        </button>
+        </n-button>
       </div>
 
       <!-- WARLORD -->
       <div class="target-choices" v-if="draftedCharacterName === 'Warlord'">
-        <button
+        <h3 class="target-choices-title">Which power would you like to use?</h3>
+
+        <n-button
+          strong
+          round
+          size="large"
+          type="error"
           v-if="canDestroy"
           @click="selectCardToDestroy"
           class="target-choices-button"
         >
           Destroy a played Card
-        </button>
+        </n-button>
         <div>
-          <button
+          <n-button
+            strong
+            round
+            size="large"
+            color="#452059"
             v-if="canCollectByType"
             @click="collectGoldByType(draftedCharacterName)"
           >
             Collect Gold by card type
-          </button>
+          </n-button>
         </div>
       </div>
 
-      <button class="close-power-screen" @click="showPowerScreenHandler">
-        Close
-      </button>
+      <n-button
+        class="close-power-screen"
+        round
+        type="error"
+        @click="showPowerScreenHandler"
+      >
+        Cancel
+      </n-button>
     </div>
 
     <div class="trade-with-deck-container" v-if="isTradingWithDeck">
-      <h1>Drop the cards you would like to Trade</h1>
+      <h3 class="trade-with-deck-title">
+        Drop the cards you would like to Trade
+      </h3>
 
       <draggable
         :list="cardsToBeTradedWithDeck"
@@ -228,12 +303,28 @@
             ghost-class="ghost"
             :key="element.id"
             id="card"
+            class="card-in-hand"
           />
         </template>
       </draggable>
-      <div class="flex">
-        <button @click="cancelTradeWithDeck">Cancel</button>
-        <button @click="initTradeWithDeck">Trade</button>
+      <div class="flex space-between" style="width: 75%">
+        <n-button
+          round
+          strong
+          size="large"
+          type="success"
+          @click="initTradeWithDeck"
+          :disabled="cardsToBeTradedWithDeck.length < 1"
+          >Trade</n-button
+        >
+        <n-button
+          round
+          strong
+          size="large"
+          type="error"
+          @click="cancelTradeWithDeck"
+          >Cancel</n-button
+        >
       </div>
     </div>
 
@@ -264,23 +355,33 @@
         Use Power
       </n-button>
     </div>
-    <button
+    <n-button
+      size="large"
+      type="error"
+      round
+      strong
       v-if="isDestroying"
       class="cancel-destroying-button"
       @click="cancelDestroyingCard"
     >
       Cancel Destroying
-    </button>
+    </n-button>
     <div
       class="gather-resources-container"
       v-if="gatherResources && gameData.currentTurn == player.userName"
     >
       <h2>Gather Resources</h2>
       <div class="button-container">
-        <button class="resource-button" @click="gatherGoldHandler">
+        <n-button
+          class="resource-button"
+          @click="gatherGoldHandler"
+          type="primary"
+        >
           +2 Gold
-        </button>
-        <button class="resource-button" @click="gatherCardHandler">Card</button>
+        </n-button>
+        <n-button class="resource-button" @click="gatherCardHandler" type="info"
+          >Card</n-button
+        >
       </div>
     </div>
     <div class="characters-container" v-if="showCharacterCards">
@@ -385,7 +486,7 @@
 </template>
 
 <script setup>
-import { NButton, NTooltip } from "naive-ui";
+import { NButton, NTooltip, NCard } from "naive-ui";
 </script>
 
 <script>
@@ -488,6 +589,7 @@ export default {
     CommunityBuild,
     NButton,
     NTooltip,
+    NCard,
   },
   computed: {
     ...mapState(["socket", "player", "gameData", "init"]),
@@ -978,6 +1080,35 @@ export default {
 </script>
 
 <style scoped>
+.flex {
+  display: flex;
+}
+
+.space-between {
+  justify-content: space-between;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.align-center {
+  align-items: center;
+}
+
+.target-choices-title {
+  font-size: 20px;
+}
+.gather-card {
+  max-width: 400px;
+  background-color: #8143a3;
+  border-color: #380256;
+}
+
 .absolute {
   position: absolute;
   top: -40%;
@@ -989,47 +1120,60 @@ export default {
 
 .close-power-screen {
   z-index: 10000;
-  background-color: red;
 }
 .use-power-container {
   width: 100%;
   height: 100%;
   position: absolute;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
+  color: white;
+}
+
+.trade-with-deck-title {
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .trade-with-deck-container {
-  width: 30%;
-  height: 50%;
-  background-color: rgb(34, 34, 34);
+  width: 35%;
+  height: 40%;
+  background-color: #452059;
+  border: 2px solid #380256;
   z-index: 10000;
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
   padding: 25px 40px;
 }
 
 .trade-with-deck-zone {
-  background-color: white;
+  background-color: #1e052c;
+  box-shadow: inset 5px 10px 4px 5px rgba(0, 0, 0, 0.25);
   width: 100%;
   height: 60%;
   display: flex;
   align-items: center;
-  overflow-x: scroll;
+  overflow-x: auto;
   margin-bottom: 20px;
 }
 .target-choices {
-  width: 30%;
-  height: 40%;
+  width: 60%;
+  height: 30%;
   background-color: rgb(34, 34, 34);
   z-index: 10000;
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  align-content: space-between;
+  flex-direction: column;
+  justify-content: space-around;
   margin: 15px;
 }
 
@@ -1146,8 +1290,8 @@ h2 {
 }
 .gather-resources-container {
   position: absolute;
-  background-color: rgba(48, 48, 48, 0.534);
-  border: 2px solid black;
+  background-color: #452059;
+  border: 2px solid #380256;
   width: 50%;
   height: 15%;
   z-index: 1000000000;
@@ -1162,6 +1306,7 @@ h2 {
 .player-played-zone {
   width: 60%;
   height: 30%;
+  max-height: 125px;
   background: rgba(241, 241, 241, 0.836);
   border: 5px solid #111420;
   box-shadow: 0px 4px 4px #000000;
@@ -1191,20 +1336,22 @@ h2 {
 
 .choose-title {
   position: absolute;
-  top: 2%;
+  top: 20%;
   left: 50%;
   transform: translate(-50%, 0);
   color: white;
+  font-size: 20px;
+  font-weight: 600;
   text-shadow: 0 0 10px black;
 }
 .characters-container {
   width: 100%;
-  height: 100%;
+  height: 50%;
   position: absolute;
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
+  bottom: 10%;
   z-index: 99999;
 }
 .hide-card {

@@ -108,7 +108,7 @@ export default {
   min-height: 10px;
   border-radius: 100%;
   background-color: #f2ea29;
-  border: 1px solid #ffc700;
+  border: 1px solid #bd9401;
   margin-top: -5px;
 }
 .hidden-cost {

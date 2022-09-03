@@ -6,6 +6,7 @@
         <select v-model="targetPlayer">
           <option selected disabled hidden>Please Choose a Player</option>
           <option
+            class="option"
             v-for="opponent in opponents"
             :key="opponent.userName"
             :value="opponent"
@@ -13,14 +14,38 @@
             {{ opponent.userName }}
           </option>
         </select>
-        <p v-if="targetPlayer">Targeted Player Gold: {{ targetPlayer.gold }}</p>
+        <n-tooltip
+          class="unique-description"
+          trigger="click"
+          style="width: 300px"
+        >
+          <template #trigger class="unique-description">
+            <n-button style="margin-left: 10px" type="info" circle size="small">
+              ?
+            </n-button>
+          </template>
+          <h1>Conditions for Community Build:</h1>
+          <p>- You cannot afford the card with the gold you have.</p>
+          <p>- You have selected a player to donate cards to</p>
+          <p>- You are not donating more cards than the player has gold</p>
+          <p>
+            - You are donating the right number of cards to make up for the gold
+            you lack
+          </p>
+          <p>-------------</p>
+          <p>would be cool to have checkmarks or X's here</p>
+        </n-tooltip>
+        <p v-if="targetPlayer" class="target-player-text">
+          Targeted Player Gold:
+          <span class="gold-amount">{{ targetPlayer.gold }}</span>
+        </p>
       </div>
 
       <div class="draggables-container">
         <div class="to-be-built">
-          <h3 style="position: fixed">Card to be built (1)</h3>
+          <h3 style="position: fixed">Place one card you want to build here</h3>
           <draggable
-            class="drop-zone"
+            class="drop-zone building-drop-zone"
             item-key="id"
             :list="cardToBeBuilt"
             @start="drag = true"
@@ -33,14 +58,14 @@
                 :cost="element.cost"
                 :type="element.type"
                 :uniqueDescription="element.uniqueDescription"
-                ghost-class="ghost"
+                ghost-class="card"
                 id="card"
               /> </template
           ></draggable>
         </div>
 
         <div class="to-be-given">
-          <h3 style="position: fixed">Cards to be given away</h3>
+          <h3 style="position: fixed">Place the cards you are donating here</h3>
           <draggable
             class="drop-zone"
             :list="cardsToGiveUp"
@@ -54,20 +79,44 @@
                 :cost="element.cost"
                 :type="element.type"
                 :uniqueDescription="element.uniqueDescription"
-                ghost-class="ghost"
+                ghost-class="card"
                 item-key="id"
                 id="card"
               /> </template
           ></draggable>
         </div>
       </div>
-      <button @click="submitCommunityBuild" :disabled="!checkConditions">
-        Submit
-      </button>
-      <button @click="cancelCommunityBuild">Cancel</button>
+      <div class="button-container">
+        <n-space justify="center" style="margin: 20px 0">
+          <n-button
+            strong
+            size="large"
+            round
+            primary
+            type="success"
+            @click="submitCommunityBuild"
+            :disabled="!checkConditions"
+          >
+            Submit
+          </n-button>
+          <n-button
+            strong
+            size="large"
+            round
+            primary
+            type="error"
+            @click="cancelCommunityBuild"
+            >Cancel</n-button
+          >
+        </n-space>
+      </div>
     </div>
   </div>
 </template>
+
+<script setup>
+import { NButton, NSpace, NTooltip } from "naive-ui";
+</script>
 
 <script>
 import { mapState } from "vuex";
@@ -88,6 +137,9 @@ export default {
   components: {
     draggable,
     DistrictCard,
+    NButton,
+    NSpace,
+    NTooltip,
   },
   props: {
     opponents: { type: Array, required: true },
@@ -172,15 +224,59 @@ export default {
 </script>
 
 <style scoped>
+#card {
+  min-width: 125px;
+}
+
+.card {
+  min-width: 125px !important;
+  opacity: 0.5;
+}
+.building-drop-zone {
+  justify-content: center !important;
+}
+h3 {
+  color: white;
+}
+.currently-targeting-text,
+.target-player-text {
+  font-size: 18px;
+  color: white;
+  font-weight: 600;
+}
+
+.target-player-text {
+  margin-top: 10px;
+}
+
+.gold-amount {
+  background-color: gold;
+  padding: 5px;
+  padding-inline: 10px;
+  border-radius: 100%;
+  border: 2px solid rgb(148, 126, 2);
+}
 .community-build-container {
   width: 100%;
   height: 100%;
   position: absolute;
 }
 
+select {
+  height: 2rem;
+  margin-top: 10px;
+}
+
+.option {
+  font-size: 20px;
+  text-align: center;
+  font-weight: 500;
+}
+
 .community-build {
   position: absolute;
-  background-color: rgb(2, 1, 7);
+  background-color: #452059;
+  border: 2px solid #380256;
   width: 60%;
   height: 40%;
   left: 50%;
@@ -202,7 +298,7 @@ export default {
   width: 50%;
   height: 100%;
   margin: 10px;
-  background-color: lightblue;
+  background-color: #240536;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -211,10 +307,10 @@ export default {
   width: 50%;
   height: 100%;
   margin: 10px;
-  background-color: lightblue;
+  background-color: #240536;
   display: flex;
   align-items: center;
-  overflow-x: scroll;
+  overflow-x: auto;
   justify-content: center;
 }
 
@@ -225,5 +321,6 @@ export default {
   align-items: center;
   justify-content: start;
   z-index: 1000000000;
+  box-shadow: inset 10px 15px 8px 5px rgba(0, 0, 0, 0.25);
 }
 </style>
