@@ -576,7 +576,10 @@ export default {
 
       this.nextPlayerRound();
     });
-    this.startGame();
+
+    setTimeout(() => {
+      this.startGame();
+    }, 10);
     store.commit("updateInit", true);
   },
   name: "GameView",

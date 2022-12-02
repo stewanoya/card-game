@@ -1,20 +1,20 @@
 <template>
   <div class="lobby">
-    <div v-if="!this.player">
+    <div v-if="!player">
       <label>Please enter a username</label>
       <n-input @input="onUserNameChange" placeholder="Make it unique!" />
       <n-button type="success" @click="initConnect">Connect</n-button>
     </div>
     <Lobby
-      :players="gameData.players"
+      :players="gameData ? gameData.players : []"
       :socket="socket"
-      v-if="this.player"
+      v-if="player"
     ></Lobby>
 
     <n-button
       color="#452059"
       class="lobby-button"
-      :disabled="gameData.players.length < 1"
+      :disabled="!gameData || gameData.players.length < 1"
       v-if="player.isHost"
       @click="startGame"
     >

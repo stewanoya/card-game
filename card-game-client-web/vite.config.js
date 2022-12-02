@@ -8,13 +8,13 @@ import vue from "@vitejs/plugin-vue";
 export default defineConfig({
   plugins: [vue()],
   build: {
-    rollupOptions: {
-      output: {
-        entryFileNames: `[name]` + hash + `.js`,
-        chunkFileNames: `[name]` + hash + `.js`,
-        assetFileNames: `[name]` + hash + `.[ext]`,
-      },
-    },
+    // rollupOptions: {
+    //   output: {
+    //     entryFileNames: `[name]` + hash + `.js`,
+    //     chunkFileNames: `[name]` + hash + `.js`,
+    //     assetFileNames: `[name]` + hash + `.[ext]`,
+    //   },
+    // },
   },
   resolve: {
     alias: {
