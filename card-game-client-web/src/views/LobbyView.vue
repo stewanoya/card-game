@@ -66,14 +66,20 @@ export default {
       this.connectPlayer(this.chosenUserName);
     },
     connectPlayer(chosenName) {
-      // const socket = io("https://card-game-server1.herokuapp.com/");
-      const socket = io("http://localhost:5000/");
+      const socket = io("https://card-game-server1.herokuapp.com/");
+      // const socket = io("http://localhost:5000/");
       store.commit("setSocket", socket);
       socket.on("connect", () => {
         store.commit("createNewPlayer", chosenName);
         socket.emit("newPlayer", this.player);
       });
-
+      socket.on("gameAlreadyStarted", () => {
+        store.commit("setPlayer", null);
+        // somehow keep username and check it against gamedata
+        // I would pass gamedata back from server
+        // if the username is the exact same, this player can jump into that position;
+        // I have to catch the disconnect, so ti doesn't remove the player
+      });
       socket.on("disconnectedPlayer", (newPlayersInfo) => {
         store.commit("updatePlayers", newPlayersInfo);
       });
@@ -83,7 +89,8 @@ export default {
         store.commit("updatePlayerFromGameData", players);
       });
 
-      socket.on("gameStartedByHost", () => {
+      socket.on("gameStartedByHost", (newGameData) => {
+        store.commit("updateGameData", newGameData);
         return router.push("/game");
       });
     },
@@ -94,6 +101,7 @@ export default {
       "toggleInitPlayerDetails",
       "createNewPlayer",
       "setSocket",
+      "setPlayer",
       "updatePlayers",
       "updatePlayerFromGameData",
       "updateGameData",

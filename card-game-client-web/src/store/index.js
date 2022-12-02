@@ -62,6 +62,9 @@ export default createStore({
     setFinalTurn(state) {
       state.gameData.finalTurn = true;
     },
+    setPlayer(state, newPlayerState) {
+      state.player = newPlayerState;
+    },
     updateDeadCharacter(state, characterName) {
       state.gameData.deadCharacter = characterName;
     },

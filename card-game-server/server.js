@@ -17,6 +17,7 @@ const io = require("socket.io")(http, {
       "inquisitive-tarsier-d80faa.netlify.app",
       "https://inquisitive-tarsier-d80faa.netlify.app",
       // "http://localhost:4173",
+      "https://inquisitive-tarsier-d80faa.netlify.app/",
       "https://62c63ee446dacf234ae5e10f--inquisitive-tarsier-d80faa.netlify.app/#/",
       "https://62c63ee446dacf234ae5e10f--inquisitive-tarsier-d80faa.netlify.app/",
       "http://62c63ee446dacf234ae5e10f--inquisitive-tarsier-d80faa.netlify.app/#/",
@@ -41,6 +42,11 @@ let gameData = {
 let firstDraftRound = true;
 
 io.on("connection", (socket) => {
+  if (gameData.gameStarted === true) {
+    socket.emit("gameAlreadyStarted");
+    return;
+  }
+
   socket.on("newPlayer", (player) => {
     player.id = socket.id;
     console.log("A user has connected " + player.userName);
@@ -72,12 +78,12 @@ io.on("connection", (socket) => {
         player.gold = 2;
       });
       io.emit("initPlayerDetails", gameData);
-      gameData.gameStarted = true;
     });
   }
 
   socket.on("gameStart", () => {
-    io.emit("gameStartedByHost");
+    gameData.gameStarted = true;
+    io.emit("gameStartedByHost", gameData);
   });
 
   socket.on("beginDraft", (newGameData) => {
@@ -175,6 +181,8 @@ io.on("connection", (socket) => {
       io.emit("disconnectedPlayer", gameData.players);
     }
 
+    // emit disconnectedPlayer during game
+    // set that player.isConnected = false;
     if (gameData.gameStarted === true) {
       // we need to somehow get player localData here.
       // There must be a way to control what is sent on disconnect.
@@ -182,7 +190,9 @@ io.on("connection", (socket) => {
 
       // check if all players have characters (aka it's action round)
       if (
-        gameData.players.every((player) => Object.keys(character).length > 1)
+        gameData.players.every(
+          (player) => Object.keys(player.character).length > 0
+        )
       ) {
         // every player has character so we do next player turn if next player turn isnt undefined.
         // if next player turn is undefined we call next draft round
