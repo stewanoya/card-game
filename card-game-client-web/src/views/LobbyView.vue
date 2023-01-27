@@ -66,7 +66,9 @@ export default {
       this.connectPlayer(this.chosenUserName);
     },
     connectPlayer(chosenName) {
-      const socket = io("https://card-game-server1.herokuapp.com/");
+      const socket = io("https://http-nodejs-production-d057.up.railway.app/", {
+        withCredentials: false,
+      });
       // const socket = io("http://localhost:5000/");
       store.commit("setSocket", socket);
       socket.on("connect", () => {
