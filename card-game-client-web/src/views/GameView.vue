@@ -621,7 +621,7 @@ export default {
   },
   methods: {
     startGame() {
-      if (this.init === false) {
+      if (this.init === true) {
         this.charactersArray = [...DEFAULT_CHARACTERS_8];
         let districtsDeck = new DistrictsDeck().shuffleDeck();
         let charactersDeck = new CharacterDeck().newDeck(
