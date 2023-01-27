@@ -9,8 +9,7 @@ export default class Player {
     isHost = false,
     isMarkedForTheft = false,
     originalIndex,
-    isKing = false,
-    isConnected = true
+    isKing = false
   ) {
     (this.userName = userName),
       (this.cards = cards),
@@ -21,8 +20,7 @@ export default class Player {
       (this.isHost = isHost),
       (this.isMarkedForTheft = isMarkedForTheft),
       (this.originalIndex = originalIndex),
-      (this.isKing = isKing),
-      (this.isConnected = isConnected);
+      (this.isKing = isKing);
   }
 
   useCharacterPower() {
