@@ -42,6 +42,7 @@
         'turn-indicator': gameData.currentTurn === userName,
       }"
     >
+      <p v-if="disconnected">DISCONNECTED!</p>
       <h5 v-if="gameData.currentTurn === userName">{{ character }}</h5>
 
       <p>{{ userName }}</p>
@@ -80,6 +81,7 @@ import { mapMutations, mapState } from "vuex";
 
 export default {
   props: {
+    disconnected: { type: Boolean, required: true },
     cards: { type: Array, required: true },
     playedCards: { type: Array, required: true },
     gold: { type: Number, required: true },

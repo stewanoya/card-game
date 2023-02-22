@@ -4,6 +4,7 @@
       <label>Please enter a username</label>
       <n-input @input="onUserNameChange" placeholder="Make it unique!" />
       <n-button type="success" @click="initConnect">Connect</n-button>
+      <p v-if="this.error">{{ error }}</p>
     </div>
     <Lobby
       :players="gameData ? gameData.players : []"
@@ -53,6 +54,7 @@ export default {
   data() {
     return {
       chosenUserName: "",
+      error: "",
     };
   },
   computed: {
@@ -60,16 +62,22 @@ export default {
   },
   methods: {
     onUserNameChange(e) {
+      this.error = "";
       this.chosenUserName = e;
     },
     initConnect() {
+      if (!this.chosenUserName) {
+        console.log("IN HERE!");
+        this.error = "Please enter a valid username";
+        return;
+      }
       this.connectPlayer(this.chosenUserName);
     },
     connectPlayer(chosenName) {
-      const socket = io("https://http-nodejs-production-d057.up.railway.app/", {
-        withCredentials: false,
-      });
-      // const socket = io("http://localhost:5000/");
+      // const socket = io("https://http-nodejs-production-d057.up.railway.app/", {
+      //   withCredentials: false,
+      // });
+      const socket = io("http://localhost:5000/");
       store.commit("setSocket", socket);
       socket.on("connect", () => {
         store.commit("createNewPlayer", chosenName);
@@ -78,6 +86,13 @@ export default {
 
       socket.on("disconnectedPlayer", (newPlayersInfo) => {
         store.commit("updatePlayers", newPlayersInfo);
+      });
+
+      socket.on("playerReconnect", (gameData) => {
+        store.commit("updateGameData", gameData);
+        store.commit("updatePlayerFromGameData", gameData.players);
+        console.log("INCOMING GAMEDATA", gameData);
+        return router.push("/game");
       });
 
       socket.on("connectedPlayer", (players) => {

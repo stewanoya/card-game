@@ -460,6 +460,7 @@
           <DistrictCard
             :name="element.districtName"
             :cost="element.cost"
+            @dblclick="doubleClickPlayCard($event, element)"
             :type="element.type"
             :uniqueDescription="element.uniqueDescription"
             ghost-class="ghost"
@@ -535,6 +536,10 @@ export default {
     this.socket.on("draftRound", (gameData) => {
       store.commit("updateGameData", gameData);
       this.draftRound();
+    });
+
+    this.socket.on("disonnectedPlayerDuringGame", (gameData) => {
+      store.commit("updateGameData", gameData);
     });
 
     this.socket.on("finalTurn", () => {
@@ -693,6 +698,13 @@ export default {
     },
     draftRound() {
       if (this.gameData.currentTurn === this.player.userName) {
+        if (this.player.disconnected) {
+          let cardToDraft = this.gameData.charactersDeck.find(
+            (card) => card.drafted === false && card.burned === false
+          );
+
+          this.draftCharacter(cardToDraft);
+        }
         this.showCharacterCards = true;
       }
     },
@@ -712,10 +724,24 @@ export default {
 
       return false;
     },
-    canPlayDistrictHandler(card) {
+    doubleClickPlayCard(cardElement, card) {
+      this.canPlayDistrictHandler(cardElement, true);
+
+      if (this.cardCanBePlayed) {
+        this.player.cards = this.player.cards.filter((c) => c.id !== card.id);
+        this.player.districts.push(card);
+        this.districtCardHasBeenPlayed();
+      } else {
+        console.log("THIS CANNOT BE PLAYED");
+      }
+    },
+    canPlayDistrictHandler(card, isDblClick) {
+      console.log(card);
       this.drag = true;
       this.cardCanBePlayed = false;
-      const cardData = card.item.innerText.split("\n");
+      const cardData = isDblClick
+        ? card.target.innerText.split("\n")
+        : card.item.innerText.split("\n");
       const cardCost = Number(cardData[0]);
       const cardName = cardData[1];
       const cardType = cardData[3];

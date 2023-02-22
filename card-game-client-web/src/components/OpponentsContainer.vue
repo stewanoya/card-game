@@ -14,6 +14,7 @@
       :isDestroying="isDestroying"
       :destructionComplete="destructionComplete"
       :index="index"
+      :disconnected="opponent.disconnected"
       :opponentsLength="opponents.length"
     />
   </div>
