@@ -40,20 +40,91 @@
       </svg>
     </div>
 
-    <div class="gather-card-container" v-if="resourceGatherCards.length == 2">
-      <n-card title="Double tap your choice" class="gather-card">
+    <div class="gather-card-container" v-if="resourceGatherCards.length >= 2">
+      <n-card
+        :title="
+          doesPlayerHaveLibrary ? 'Select 2 cards' : 'Double tap your choice'
+        "
+        class="gather-card"
+      >
         <div style="display: flex; justify-content: space-around">
           <DistrictCard
             v-for="card in resourceGatherCards"
+            :class="{
+              'selected-to-gather': !!this.selectedResourceGatherCards.find(
+                (s) => s.id === card.id
+              ),
+            }"
             :name="card.districtName"
             :type="card.type"
             :cost="card.cost"
             :key="card.id"
             :uniqueDescription="card.uniqueDescription"
+            @click="selectCardToGather(card)"
             @dblclick="gatherCardSelected(card)"
           />
         </div>
+        <n-button
+          v-if="doesPlayerHaveLibrary"
+          type="success"
+          size="large"
+          :disable="this.selectedResourceGatherCards.length < 2"
+          @click="submitMultipleResourceGatherCards"
+          >Submit choices</n-button
+        >
       </n-card>
+    </div>
+    <div class="unique-ability-container" v-if="isUsingSchoolOfMagicAbility">
+      <h3>What type would you like to change School of Magic to?</h3>
+      <div style="display: flex; flex-wrap: wrap">
+        <n-button @click="setSchoolOfMagicColor('yellow')">Yellow</n-button>
+        <n-button @click="setSchoolOfMagicColor('blue')">Blue</n-button>
+        <n-button @click="setSchoolOfMagicColor('green')">Green</n-button>
+        <n-button @click="setSchoolOfMagicColor('red')">Red</n-button>
+        <n-button @click="setSchoolOfMagicColor('Purple')">Purple</n-button>
+      </div>
+      <n-button type="error" size="large" @click="setSchoolOfMagicColor(null)"
+        >Cancel</n-button
+      >
+    </div>
+    <div class="unique-ability-container" v-if="isUsingLabratoryAbility">
+      <h3>Which card would you like to discard for 1 gold?</h3>
+      <div style="display: flex; flex-wrap: wrap">
+        <n-button
+          v-for="card in player.cards"
+          :key="card.id"
+          @click="setLabratoryAbilityChoice(card)"
+          >{{ card.districtName }}</n-button
+        >
+      </div>
+      <n-button
+        type="error"
+        size="large"
+        @click="setLabratoryAbilityChoice(null)"
+        >Cancel</n-button
+      >
+    </div>
+    <div class="unique-ability-container" v-if="showGraveYard">
+      <h3>Would you like to keep this card destroyed card for 1 gold?</h3>
+      <DistrictCard
+        :name="graveYardCard.districtName"
+        :type="graveYardCard.type"
+        :cost="graveYardCard.cost"
+        :key="graveYardCard.id"
+        :uniqueDescription="graveYardCard.uniqueDescription"
+      />
+      <div style="display: flex; gap: 1rem">
+        <n-button
+          :disabled="this.player.gold < 1"
+          type="success"
+          size="large"
+          @click="useGraveYardAbility(true)"
+          >Yes</n-button
+        >
+        <n-button type="error" size="large" @click="useGraveYardAbility(false)"
+          >No</n-button
+        >
+      </div>
     </div>
     <div class="use-power-container" v-if="showPowerScreen && !powerUsed">
       <!-- power screen can be it's own component -->
@@ -408,6 +479,7 @@
           :opponents="opponents"
           :isDestroying="isDestroying"
           :destructionComplete="destructionComplete"
+          :graveYardAbilityCheck="graveYardAbilityCheck"
         />
         <div class="districts-deck">
           Deck: <strong>{{ gameData.districtsDeck.length }}</strong>
@@ -431,6 +503,12 @@
               :cost="element.cost"
               :key="element.id"
               :uniqueDescription="element.uniqueDescription"
+              :useSmithyAbility="useSmithyAbility"
+              :smithyAbilityUsed="smithyAbilityUsed"
+              :useSchoolOfMagicAbility="useSchoolOfMagicAbility"
+              :schoolOfMagicAbilityUsed="schoolOfMagicAbilityUsed"
+              :useLaboratoryAbility="useLaboratoryAbility"
+              :laboratoryAbilityUsed="laboratoryAbilityUsed"
             />
           </template>
         </draggable>
@@ -510,10 +588,17 @@ export default {
   data() {
     return {
       drag: false,
+      smithyAbilityUsed: false,
+      schoolOfMagicAbilityUsed: false,
+      isUsingSchoolOfMagicAbility: false,
+      laboratoryAbilityUsed: false,
+      isUsingLabratoryAbility: false,
       cardCanBePlayed: false,
       rememberCardCost: undefined,
       districtPlayed: false,
       gatherResources: false,
+      graveYardCard: null,
+      showGraveYard: false,
       showCharacterCards: false,
       powerUsed: false,
       showPowerScreen: false,
@@ -529,6 +614,7 @@ export default {
       architectBuildLimitCounter: 0,
       cardsToBeTradedWithDeck: [],
       resourceGatherCards: [],
+      selectedResourceGatherCards: [],
       charactersArray: [],
     };
   },
@@ -551,6 +637,9 @@ export default {
     });
 
     this.socket.on("updateGameData", (gameData) => {
+      if (gameData.lastCardDestroyed && gameData.lastCardDestroyed.userName) {
+        this.graveYardAbilityCheck(gameData.lastCardDestroyed);
+      }
       store.commit("updateGameData", gameData);
       store.commit("updatePlayerFromGameData", gameData.players);
       console.log("gamedata was updated!", this.gameData);
@@ -623,6 +712,39 @@ export default {
     draftedCharacterName() {
       return this.player.character.name;
     },
+    doesPlayerHaveLibrary() {
+      let library = this.player.districts.find(
+        (d) => d.districtName === "Library"
+      );
+
+      if (library) {
+        return true;
+      }
+
+      return false;
+    },
+    doesPlayerHaveObservatory() {
+      let observatory = this.player.districts.find(
+        (d) => d.districtName === "Observatory"
+      );
+
+      if (observatory) {
+        return true;
+      }
+
+      return false;
+    },
+    doesPlayerHaveGraveyard() {
+      let graveYard = this.player.districts.find(
+        (d) => d.districtName === "Graveyard"
+      );
+
+      if (graveYard) {
+        return true;
+      }
+
+      return false;
+    },
   },
   methods: {
     startGame() {
@@ -678,6 +800,7 @@ export default {
       this.isTradingWithDeck = false;
       this.isDestroying = false;
       this.gotPlusOneGold = false;
+      this.laboratoryAbilityUsed = false;
       this.showCommunityBuildingScreen = false;
       this.canCollectByType = true;
       this.canDestroy = true;
@@ -685,10 +808,117 @@ export default {
       this.architectBuildLimitCounter = 0;
       this.cardsToBeTradedWithDeck = [];
       this.resourceGatherCards = [];
+      this.graveYardCard = null;
+      this.showGraveYard = false;
+      this.smithyAbilityUsed = false;
+      this.schoolOfMagicAbilityUsed = false;
       this.charactersArray = [...DEFAULT_CHARACTERS_8];
     },
     showPowerScreenHandler() {
       this.showPowerScreen = !this.showPowerScreen;
+    },
+    useSmithyAbility() {
+      if (this.player.gold < 2) {
+        console.log("NOT ENOUGH GOLD!");
+        return;
+      }
+
+      if (this.smithyAbilityUsed) {
+        console.log("POWER ALREADY USED!");
+        return;
+      }
+
+      this.player.gold = this.player.gold - 2;
+      let card1 = this.gameData.districtsDeck.pop();
+      let card2 = this.gameData.districtsDeck.pop();
+      let card3 = this.gameData.districtsDeck.pop();
+
+      this.player.cards.push(card1, card2, card3);
+
+      store.commit("updatePlayerToGameData", this.player);
+      this.socket.emit("updateGameData", this.gameData);
+      this.smithyAbilityUsed = true;
+    },
+    graveYardAbilityCheck({ userName, cardData }) {
+      if (this.player.userName !== userName) {
+        console.log("NOT THIS PLAYER");
+        return;
+      }
+
+      if (!this.doesPlayerHaveGraveyard) {
+        console.log("PLAYER DOESN'T HAVE GRAVEYARD");
+
+        return;
+      }
+
+      this.graveYardCard = cardData;
+      this.showGraveYard = true;
+      console.log("GRAVEYARD SHOW", this.showGraveYard);
+      console.log("FOR THIS CARD", cardData);
+    },
+    useGraveYardAbility(choiceToKeep) {
+      if (!choiceToKeep) {
+        this.graveYardCard = null;
+        this.showGraveYard = false;
+        return;
+      }
+
+      this.player.cards.push({ ...this.graveYardCard });
+      this.player.gold--;
+      this.graveYardCard = null;
+      this.showGraveYard = false;
+      this.gameData.lastCardDestroyed = null;
+      store.commit("updatePlayerToGameData", this.player);
+      this.socket.emit("updateGameData", this.gameData);
+    },
+
+    useLaboratoryAbility() {
+      if (this.laboratoryAbilityUsed) {
+        return;
+      }
+
+      this.isUsingLabratoryAbility = true;
+    },
+
+    setLabratoryAbilityChoice(card) {
+      if (!card) {
+        this.isUsingLabratoryAbility = false;
+      }
+      this.player.cards = this.player.cards.filter((c) => c.id !== card.id);
+      this.player.gold++;
+      this.laboratoryAbilityUsed = true;
+      this.isUsingLabratoryAbility = false;
+      this.gameData.districtsDeck.push(card);
+      store.commit("updatePlayerToGameData", this.player);
+      this.socket.emit("updateGameData", this.gameData);
+    },
+    useSchoolOfMagicAbility() {
+      if (this.schoolOfMagicAbilityUsed) {
+        return;
+      }
+      this.isUsingSchoolOfMagicAbility = true;
+      console.log("is using", this.isUsingSchoolOfMagicAbility);
+    },
+    setSchoolOfMagicColor(choice) {
+      let schoolOfMagic = this.player.districts.find(
+        (d) => d.districtName === "School of Magic"
+      );
+
+      if (choice === schoolOfMagic.type) {
+        return;
+      }
+
+      if (!choice) {
+        this.isUsingSchoolOfMagicAbility = false;
+        return;
+      }
+
+      schoolOfMagic.type = choice;
+      this.isUsingSchoolOfMagicAbility = false;
+      this.schoolOfMagicAbilityUsed = true;
+
+      store.commit("updatePlayerToGameData", this.player);
+      this.socket.emit("updateGameData", this.gameData);
     },
     generateID() {
       return Math.random()
@@ -725,7 +955,7 @@ export default {
       return false;
     },
     doubleClickPlayCard(cardElement, card) {
-      this.canPlayDistrictHandler(cardElement, true);
+      this.canPlayDistrictHandler(cardElement, true, card);
 
       if (this.cardCanBePlayed) {
         this.player.cards = this.player.cards.filter((c) => c.id !== card.id);
@@ -735,12 +965,16 @@ export default {
         console.log("THIS CANNOT BE PLAYED");
       }
     },
-    canPlayDistrictHandler(card, isDblClick) {
+    canPlayDistrictHandler(card, isDblClick, cardDataFromDoubleClick) {
       console.log(card);
       this.drag = true;
       this.cardCanBePlayed = false;
       const cardData = isDblClick
-        ? card.target.innerText.split("\n")
+        ? [
+            cardDataFromDoubleClick.cost,
+            cardDataFromDoubleClick.districtName,
+            cardDataFromDoubleClick.type,
+          ]
         : card.item.innerText.split("\n");
       const cardCost = Number(cardData[0]);
       const cardName = cardData[1];
@@ -861,10 +1095,50 @@ export default {
       this.gatherResources = false;
       let card1 = this.gameData.districtsDeck.shift();
       let card2 = this.gameData.districtsDeck.shift();
+      let card3;
 
-      this.resourceGatherCards = [card1, card2];
+      if (this.doesPlayerHaveObservatory) {
+        console.log("PLAYER HAS OBSERVATORY");
+        card3 = this.gameData.districtsDeck.shift();
+      }
+      this.resourceGatherCards = card3 ? [card1, card2, card3] : [card1, card2];
       store.commit("updateGameData", this.gameData);
       this.socket.emit("updateGameData", this.gameData);
+    },
+    selectCardToGather(chosenCard) {
+      if (!this.doesPlayerHaveLibrary) {
+        return;
+      }
+
+      let cardAlreadyChosen = this.selectedResourceGatherCards.find(
+        (s) => s.id === chosenCard.id
+      );
+      if (cardAlreadyChosen) {
+        this.selectedResourceGatherCards =
+          this.selectedResourceGatherCards.filter(
+            (s) => s.id !== cardAlreadyChosen.id
+          );
+        return;
+      }
+
+      if (this.selectedResourceGatherCards.length >= 2) {
+        return;
+      }
+      this.selectedResourceGatherCards.push(chosenCard);
+    },
+
+    submitMultipleResourceGatherCards() {
+      if (this.selectedResourceGatherCards.length < 2) {
+        return;
+      }
+      for (let card of this.selectedResourceGatherCards) {
+        this.player.cards.push(card);
+      }
+      store.commit("updatePlayerToGameData", this.player);
+      store.commit("updateGameData", this.gameData);
+      this.socket.emit("updateGameData", this.gameData);
+      this.resourceGatherCards = [];
+      this.selectedResourceGatherCards = [];
     },
     gatherCardSelected(chosenCard) {
       let notChosenCard = this.resourceGatherCards.filter(
@@ -1133,11 +1407,14 @@ export default {
   font-size: 20px;
 }
 .gather-card {
-  max-width: 400px;
+  width: 50%;
+  max-width: 50rem;
   background-color: #8143a3;
   border-color: #380256;
 }
-
+.selected-to-gather {
+  border: 5px dashed #380256;
+}
 .absolute {
   position: absolute;
   top: -40%;
@@ -1293,6 +1570,25 @@ h2 {
   left: 35px;
   bottom: 190px;
   z-index: 99999999;
+}
+
+.unique-ability-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40%;
+  max-width: 30rem;
+  height: 40%;
+  max-height: 40rem;
+  gap: 1rem;
+  color: white;
+  background-color: #1e052c;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 999999;
 }
 .crown {
   width: 100%;

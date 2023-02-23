@@ -13,6 +13,7 @@ export default createStore({
       charactersDeck: [],
       players: [],
       currentTurn: undefined,
+      lastCardDestroyed: { userName: null, cardData: null },
       initOrderOfPlayers: [],
       deadCharacter: null,
       gameStarted: false,
@@ -104,6 +105,11 @@ export default createStore({
       state.init = payload;
     },
     destroyPlayedCard(state, payload) {
+      let costSubtraction =
+        payload.greatWall && payload.cardToDestroy.districtName !== "Great Wall"
+          ? 0
+          : -1;
+      console.log("COST SUBTRACTION DPC", costSubtraction);
       let foundPlayer = state.gameData.players.find(
         (player) => player.userName == payload.userName
       );
@@ -115,7 +121,7 @@ export default createStore({
         ...foundPlayer,
       };
 
-      state.player.gold -= payload.cardToDestroy.cost - 1;
+      state.player.gold -= payload.cardToDestroy.cost - costSubtraction;
     },
   },
   actions: {},

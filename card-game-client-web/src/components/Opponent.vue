@@ -65,7 +65,10 @@
           class="flip-over opponent-played-card"
           :class="{
             // cannot destroy completed city
-            'red-glow': isDestroying && playedCards.length !== 7,
+            'red-glow':
+              isDestroying &&
+              playedCards.length !== 7 &&
+              element.districtName !== 'Keep',
           }"
           @click="destroyCardHandler(element, userName)"
         />
@@ -92,6 +95,7 @@ export default {
     destructionComplete: { type: Function, required: true },
     index: { type: Number, required: true },
     opponentsLength: { type: Number, required: true },
+    graveYardAbilityCheck: { type: Function, required: true },
   },
   name: "Opponent",
   components: {
@@ -117,16 +121,45 @@ export default {
     },
   },
   methods: {
+    doesPlayerHaveGreatWall(userName) {
+      let player = this.gameData.players.find((p) => p.userName === userName);
+
+      let greatWall = player.districts.find(
+        (d) => d.districtName === "Great Wall"
+      );
+
+      return greatWall ? true : false;
+    },
     destroyCardHandler(cardToDestroy, userName) {
-      if (!this.isDestroying || this.player.gold < cardToDestroy.cost - 1) {
+      console.log(cardToDestroy);
+
+      if (cardToDestroy.districtName === "Keep") {
+        return;
+      }
+
+      let costSubtraction = -1;
+      let greatWall = this.doesPlayerHaveGreatWall(userName);
+      console.log("IS Great Wall dcHandler", greatWall);
+      costSubtraction =
+        greatWall && cardToDestroy.districtName !== "Great Wall" ? 0 : -1;
+
+      console.log("costSubtraction dcHandler", greatWall);
+      if (
+        !this.isDestroying ||
+        this.player.gold < cardToDestroy.cost - costSubtraction
+      ) {
+        console.log("NOT ENOUGH MONEY");
         return;
       }
 
       if (this.playedCards.length === 7) {
+        console.log("CITY COMPLETE");
         //do nothing if completed city
         return;
       }
-      const data = { cardToDestroy, userName };
+
+      const data = { cardToDestroy, userName, greatWall };
+      this.gameData.lastCardDestroyed = { userName, cardData: cardToDestroy };
       store.commit("destroyPlayedCard", data);
       this.socket.emit("updateGameData", this.gameData);
       this.destructionComplete();
@@ -200,6 +233,7 @@ h3 {
 
 .red-glow {
   background-color: rgba(156, 4, 4, 0.644);
+  cursor: pointer;
   box-shadow: 0 0 0 0 rgb(143, 0, 0, 1);
   transform: scale(1) rotate(180deg);
   animation: pulse 2s infinite;

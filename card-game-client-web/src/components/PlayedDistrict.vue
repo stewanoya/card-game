@@ -1,5 +1,37 @@
 <template>
   <div class="district-card">
+    <div class="action-button-group">
+      <n-button
+        class="action-button"
+        @click="useSmithyAbility"
+        v-if="name === 'Smithy'"
+        size="tiny"
+        type="info"
+        :disabled="smithyAbilityUsed"
+      >
+        Ability
+      </n-button>
+      <n-button
+        class="action-button"
+        @click="useSchoolOfMagicAbility"
+        v-if="name === 'School of Magic'"
+        size="tiny"
+        type="info"
+        :disabled="schoolOfMagicAbilityUsed"
+      >
+        Ability
+      </n-button>
+      <n-button
+        class="action-button"
+        @click="useLaboratoryAbility"
+        v-if="name === 'Laboratory'"
+        size="tiny"
+        type="info"
+        :disabled="laboratoryAbilityUsed"
+      >
+        Ability
+      </n-button>
+    </div>
     <div class="district-header">
       <div class="gold-coin-container">
         <!-- We hide the cost, but still need to assess the cost before playing -->
@@ -15,7 +47,7 @@
     </div>
     <n-tooltip
       class="unique-description"
-      trigger="click"
+      trigger="hover"
       style="width: 300px"
       v-if="uniqueDescription"
     >
@@ -43,12 +75,19 @@ export default {
     cost: { type: String, required: true },
     type: { type: String, required: true },
     uniqueDescription: { type: String, required: false },
+    useSmithyAbility: { type: Function, required: true },
+    smithyAbilityUsed: { type: Boolean, required: true },
+    useSchoolOfMagicAbility: { type: Function, required: true },
+    schoolOfMagicAbilityUsed: { type: Boolean, required: true },
+    useLaboratoryAbility: { type: Function, required: true },
+    laboratoryAbilityUsed: { type: Boolean, required: true },
   },
   computed: {
     costAsNumber() {
       return Number(this.cost);
     },
   },
+  methods: {},
 };
 </script>
 
@@ -71,6 +110,14 @@ export default {
   overflow: hidden;
   box-shadow: 0px 2px 0px rgba(0, 0, 0, 0.25);
   cursor: grab;
+  z-index: 2;
+}
+
+.action-button {
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 2;
 }
 
@@ -164,7 +211,7 @@ export default {
 .info-button {
   border-radius: 10px;
   position: absolute;
-  top: 60%;
+  top: 30%;
   font-size: 12px;
   z-index: 1000;
 }

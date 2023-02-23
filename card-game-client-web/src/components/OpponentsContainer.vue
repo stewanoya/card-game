@@ -16,6 +16,7 @@
       :index="index"
       :disconnected="opponent.disconnected"
       :opponentsLength="opponents.length"
+      :graveYardAbilityCheck="graveYardAbilityCheck"
     />
   </div>
 </template>
@@ -27,6 +28,7 @@ export default {
     opponents: { type: Array, required: true },
     isDestroying: { type: Boolean, required: true },
     destructionComplete: { type: Function, required: true },
+    graveYardAbilityCheck: { type: Function, required: true },
   },
   name: "OpponentsContainer",
   components: {
