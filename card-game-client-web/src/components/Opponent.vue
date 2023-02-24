@@ -141,12 +141,12 @@ export default {
       let greatWall = this.doesPlayerHaveGreatWall(userName);
       console.log("IS Great Wall dcHandler", greatWall);
       costSubtraction =
-        greatWall && cardToDestroy.districtName !== "Great Wall" ? 0 : -1;
+        greatWall && cardToDestroy.districtName !== "Great Wall" ? 0 : 1;
 
       console.log("costSubtraction dcHandler", greatWall);
       if (
         !this.isDestroying ||
-        this.player.gold < cardToDestroy.cost - costSubtraction
+        this.player.gold < Number(cardToDestroy.cost) - costSubtraction
       ) {
         console.log("NOT ENOUGH MONEY");
         return;

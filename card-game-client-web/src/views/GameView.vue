@@ -74,6 +74,38 @@
         >
       </n-card>
     </div>
+    <div class="final-scores-container" v-if="showFinalScores">
+      <div class="final-scores">
+        <ul>
+          <li class="final-score-row">
+            <span style="font-size: 2rem">Place</span>
+            <span style="font-size: 2rem">Player</span>
+            <span style="font-size: 2rem">Score</span>
+          </li>
+          <li
+            v-for="(score, index) of finalScores"
+            :key="score.userName"
+            class="final-score-row"
+          >
+            <span
+              class="final-place"
+              :class="{
+                gold: index === 0,
+                silver: index === 1,
+                bronze: index === 2,
+              }"
+              >&nbsp;{{ index + 1 }}&nbsp;</span
+            >
+            <span class="final-username">{{ score.user }}</span>
+            <span class="final-score">{{ score.score }}</span>
+          </li>
+        </ul>
+      </div>
+      <n-button size="large" type="info" class="back-to-lobby-button"
+        >Back to Lobby</n-button
+      >
+    </div>
+
     <div class="unique-ability-container" v-if="isUsingSchoolOfMagicAbility">
       <h3>What type would you like to change School of Magic to?</h3>
       <div style="display: flex; flex-wrap: wrap">
@@ -84,6 +116,22 @@
         <n-button @click="setSchoolOfMagicColor('Purple')">Purple</n-button>
       </div>
       <n-button type="error" size="large" @click="setSchoolOfMagicColor(null)"
+        >Cancel</n-button
+      >
+    </div>
+    <div class="unique-ability-container" v-if="showHauntedCityAbility">
+      <h3>
+        What type would you like to change Haunted City to for the end of the
+        game?
+      </h3>
+      <div style="display: flex; flex-wrap: wrap">
+        <n-button @click="setHauntedCityColor('yellow')">Yellow</n-button>
+        <n-button @click="setHauntedCityColor('blue')">Blue</n-button>
+        <n-button @click="setHauntedCityColor('green')">Green</n-button>
+        <n-button @click="setHauntedCityColor('red')">Red</n-button>
+        <n-button @click="setHauntedCityColor('Purple')">Purple</n-button>
+      </div>
+      <n-button type="error" size="large" @click="setHauntedCityColor(null)"
         >Cancel</n-button
       >
     </div>
@@ -598,7 +646,9 @@ export default {
       districtPlayed: false,
       gatherResources: false,
       graveYardCard: null,
+      showHauntedCityAbility: false,
       showGraveYard: false,
+      showFinalScores: false,
       showCharacterCards: false,
       powerUsed: false,
       showPowerScreen: false,
@@ -616,6 +666,7 @@ export default {
       resourceGatherCards: [],
       selectedResourceGatherCards: [],
       charactersArray: [],
+      finalScores: [],
     };
   },
   created() {
@@ -629,15 +680,21 @@ export default {
     });
 
     this.socket.on("finalTurn", () => {
+      //in here I would do the Haunted City thing;
+      this.checkIfPlayerHasHauntedCity();
       console.log("now I would show final turn announcement");
     });
 
-    this.socket.on("finalScores", (finalGameData) => {
-      console.log("THIS WOULD CALCULATE FINAL SCORES!", finalGameData);
+    this.socket.on("finalScores", ({ gameData, scores }) => {
+      this.displayFinalScores(scores);
     });
 
     this.socket.on("updateGameData", (gameData) => {
-      if (gameData.lastCardDestroyed && gameData.lastCardDestroyed.userName) {
+      if (
+        gameData.lastCardDestroyed &&
+        gameData.lastCardDestroyed.userName &&
+        gameData.currentTurn !== this.player.userName
+      ) {
         this.graveYardAbilityCheck(gameData.lastCardDestroyed);
       }
       store.commit("updateGameData", gameData);
@@ -745,6 +802,14 @@ export default {
 
       return false;
     },
+
+    doesPlayerHaveHauntedCity() {
+      let hauntedCity = this.player.districts.find(
+        (d) => d.districtName === "Haunted City"
+      );
+
+      return !!hauntedCity;
+    },
   },
   methods: {
     startGame() {
@@ -798,8 +863,10 @@ export default {
       this.showPowerScreen = false;
       this.isUsingPower = false;
       this.isTradingWithDeck = false;
+      this.showFinalScores = false;
       this.isDestroying = false;
       this.gotPlusOneGold = false;
+      this.showHauntedCityAbility = false;
       this.laboratoryAbilityUsed = false;
       this.showCommunityBuildingScreen = false;
       this.canCollectByType = true;
@@ -812,10 +879,36 @@ export default {
       this.showGraveYard = false;
       this.smithyAbilityUsed = false;
       this.schoolOfMagicAbilityUsed = false;
+      this.finalScores = [];
       this.charactersArray = [...DEFAULT_CHARACTERS_8];
     },
     showPowerScreenHandler() {
       this.showPowerScreen = !this.showPowerScreen;
+    },
+    displayFinalScores(scores) {
+      this.finalScores = scores;
+      this.showFinalScores = true;
+    },
+    checkIfPlayerHasHauntedCity() {
+      if (!this.doesPlayerHaveHauntedCity) {
+        console.log("PLAYER DOESNT HAVE HAUNTED CITY");
+        return;
+      }
+
+      this.showHauntedCityAbility = true;
+    },
+    setHauntedCityColor(choice) {
+      let hauntedCity = this.player.districts.find(
+        (d) => d.districtName === "Haunted City"
+      );
+      if (!choice) {
+        this.showHauntedCityAbility = false;
+        return;
+      }
+      hauntedCity.type = choice;
+      this.showHauntedCityAbility = false;
+      store.commit("updatePlayerToGameData", this.player);
+      this.socket.emit("updateGameData", this.gameData);
     },
     useSmithyAbility() {
       if (this.player.gold < 2) {
@@ -860,6 +953,8 @@ export default {
       if (!choiceToKeep) {
         this.graveYardCard = null;
         this.showGraveYard = false;
+        this.gameData.lastCardDestroyed = null;
+        this.socket.emit("updateGameData", this.gameData);
         return;
       }
 
@@ -1141,6 +1236,10 @@ export default {
       this.selectedResourceGatherCards = [];
     },
     gatherCardSelected(chosenCard) {
+      if (this.doesPlayerHaveLibrary) {
+        console.log("DOUBLE CLICK DISABLED FOR LIBRARY");
+        return;
+      }
       let notChosenCard = this.resourceGatherCards.filter(
         (card) => card !== chosenCard
       )[0];
@@ -1406,6 +1505,70 @@ export default {
 .target-choices-title {
   font-size: 20px;
 }
+
+.final-scores-container {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  background-color: rgba(1, 1, 5, 0.836);
+  backdrop-filter: blur(10px);
+  z-index: 999999998;
+}
+
+.back-to-lobby-button {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.final-scores {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 999999999;
+  width: 50%;
+  max-width: 30rem;
+  height: 50%;
+  max-height: 30rem;
+  background-color: #380256;
+  border: 2px solid #8143a3;
+  box-shadow: inset 5px 10px 4px 5px rgba(0, 0, 0, 0.25);
+  color: white;
+  overflow-y: auto;
+}
+
+.final-place {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+.final-score {
+  font-size: 1.5rem;
+}
+
+.gold,
+.bronze,
+.silver {
+  border-radius: 1000rem;
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.gold {
+  background-color: rgb(233, 199, 9);
+}
+
+.silver {
+  background-color: silver;
+}
+
+.bronze {
+  background-color: rgb(192, 130, 16);
+}
+.final-username {
+  font-size: 1rem;
+}
+
 .gather-card {
   width: 50%;
   max-width: 50rem;
@@ -1556,7 +1719,12 @@ h2 {
   position: absolute;
   bottom: 20px;
 }
-
+.final-score-row {
+  display: flex;
+  margin-bottom: 0.25rem;
+  justify-content: space-around;
+  align-items: center;
+}
 .resource-button {
   width: 40%;
   height: 60%;
@@ -1676,7 +1844,7 @@ h2 {
   display: flex;
   justify-content: center;
   align-items: center;
-  bottom: 10%;
+  top: -5%;
   z-index: 99999;
 }
 .hide-card {

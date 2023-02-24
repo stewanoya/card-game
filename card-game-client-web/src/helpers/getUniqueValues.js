@@ -19,10 +19,10 @@ const getUniqueDescription = (districtName) => {
       return `Once during your turn, you may put a district card from your hand to the bottom of the District Deck face-down and receive 1 gold from the bank.`;
     case "Keep": // easy -> DONE!
       return `The Keep cannot be targeted by the Warlord's / Diplomat's ability.`;
-    case "Haunted City": // hard
+    case "Haunted City": // hard -> DONE! ~NOT TESTED
       return `For purposes of Victory Points (not Income), the Haunted City is considered to be of any 1 color of your choice at the end of the game (unless you built it during the last round of the game).`;
     case "Dragon's Gate": // easy
-      return `This district is worth 2 additional points at the end of the game`;
+      return `The cost for this district is 6, but is worth 8 Victory Points at the end of the game. The cost of the Warlord's Diplomat's ability targeting this district is based off the final cost of this district.`;
   }
 };
 

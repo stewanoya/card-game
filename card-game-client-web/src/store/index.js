@@ -108,8 +108,9 @@ export default createStore({
       let costSubtraction =
         payload.greatWall && payload.cardToDestroy.districtName !== "Great Wall"
           ? 0
-          : -1;
+          : 1;
       console.log("COST SUBTRACTION DPC", costSubtraction);
+      console.log("CARD COST", payload.cardToDestroy.cost);
       let foundPlayer = state.gameData.players.find(
         (player) => player.userName == payload.userName
       );
@@ -120,8 +121,14 @@ export default createStore({
       state.gameData.players[getPlayerIndex(state, foundPlayer.userName)] = {
         ...foundPlayer,
       };
+      console.log("gold before", state.player.gold);
+      let difference =
+        state.player.gold -
+        (Number(payload.cardToDestroy.cost) - costSubtraction);
 
-      state.player.gold -= payload.cardToDestroy.cost - costSubtraction;
+      console.log("DIFFERENCE AFTER DESTROYING", difference);
+      state.player.gold = difference;
+      console.log("gold after", state.player.gold);
     },
   },
   actions: {},
