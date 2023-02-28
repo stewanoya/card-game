@@ -1,8 +1,12 @@
 <template>
   <div class="lobby">
-    <div v-if="!player">
+    <div v-if="!player" class="username-container" style="width: 30%">
       <label>Please enter a username</label>
-      <n-input @input="onUserNameChange" placeholder="Make it unique!" />
+      <n-input
+        @keyup.enter="initConnect"
+        @input="onUserNameChange"
+        placeholder="Make it unique!"
+      />
       <n-button type="success" @click="initConnect">Connect</n-button>
       <p v-if="this.error">{{ error }}</p>
     </div>
@@ -59,6 +63,13 @@ export default {
   },
   computed: {
     ...mapState(["socket", "player", "gameData"]),
+    isNameTaken() {
+      console.log(this.gameData.players);
+      let match = this.gameData.players.find(
+        (p) => p.userName === this.chosenUserName
+      );
+      return !!match;
+    },
   },
   methods: {
     onUserNameChange(e) {
@@ -67,8 +78,17 @@ export default {
     },
     initConnect() {
       if (!this.chosenUserName) {
-        console.log("IN HERE!");
         this.error = "Please enter a valid username";
+        return;
+      }
+
+      if (this.isNameTaken) {
+        this.error = "I said make it unique! That name is taken.";
+        return;
+      }
+
+      if (this.chosenUserName === "System") {
+        this.error = "This name is reserved";
         return;
       }
       this.connectPlayer(this.chosenUserName);
@@ -137,5 +157,11 @@ export default {
   border: 2px solid #380256;
   border-radius: 10px;
   font-size: 20px;
+}
+
+.username-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 </style>

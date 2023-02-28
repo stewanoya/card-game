@@ -8,18 +8,19 @@ export default createStore({
     socket: "",
     player: "",
     gameData: {
-      chats: [],
       districtsDeck: [],
       charactersDeck: [],
       players: [],
       currentTurn: undefined,
       lastCardDestroyed: { userName: null, cardData: null },
       initOrderOfPlayers: [],
+      charactersArray: [],
       deadCharacter: null,
       gameStarted: false,
       finalTurn: false,
       finishedFirst: "",
     },
+    chats: [],
     initPlayerDetails: false,
     init: false,
   },
@@ -129,6 +130,10 @@ export default createStore({
       console.log("DIFFERENCE AFTER DESTROYING", difference);
       state.player.gold = difference;
       console.log("gold after", state.player.gold);
+    },
+
+    updateChat(state, payload) {
+      state.chats = [...payload];
     },
   },
   actions: {},

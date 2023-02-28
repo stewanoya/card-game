@@ -74,6 +74,32 @@
         >
       </n-card>
     </div>
+    <div class="chats-container">
+      <div class="chats" ref="messageContainer">
+        <div class="chat-message"></div>
+        <div
+          v-for="chat of chats"
+          :key="chat.timestamp"
+          class="chat-message"
+          :class="{ 'system-message': chat.userName === 'System' }"
+        >
+          <p>{{ chat.userName }}</p>
+          <p>({{ new Date(chat.timestamp).toLocaleTimeString() }})</p>
+          :
+          <p>{{ chat.message }}</p>
+        </div>
+      </div>
+      <div class="flex">
+        <n-input
+          style="text-align: left"
+          @keyup.enter="sendChat()"
+          v-model:value="chatMessage"
+          placeholder="Message.."
+        />
+        <n-button color="purple" @click="sendChat()">Send</n-button>
+      </div>
+    </div>
+
     <div class="final-scores-container" v-if="showFinalScores">
       <div class="final-scores">
         <ul>
@@ -224,7 +250,8 @@
               @click="
                 markPlayerForTheft(
                   gameData,
-                  getPlayerByCharacterName(character.name)
+                  getPlayerByCharacterName(character.name),
+                  character.name
                 )
               "
               class="target-choices-button"
@@ -613,7 +640,8 @@
 </template>
 
 <script setup>
-import { NButton, NTooltip, NCard } from "naive-ui";
+import { NButton, NTooltip, NCard, NInput } from "naive-ui";
+import Chat from "../models/Chat";
 </script>
 
 <script>
@@ -636,6 +664,7 @@ export default {
   data() {
     return {
       drag: false,
+      chatMessage: "",
       smithyAbilityUsed: false,
       schoolOfMagicAbilityUsed: false,
       isUsingSchoolOfMagicAbility: false,
@@ -682,7 +711,14 @@ export default {
     this.socket.on("finalTurn", () => {
       //in here I would do the Haunted City thing;
       this.checkIfPlayerHasHauntedCity();
-      console.log("now I would show final turn announcement");
+      this.newChat(
+        "🚨FINAL TURN🚨 - Someone has completed their city.",
+        "System"
+      );
+    });
+
+    this.socket.on("updateChats", (newChat) => {
+      store.commit("updateChat", newChat);
     });
 
     this.socket.on("finalScores", ({ gameData, scores }) => {
@@ -745,8 +781,16 @@ export default {
     NTooltip,
     NCard,
   },
+  watch: {
+    chats: function () {
+      this.$nextTick(function () {
+        let container = this.$refs.messageContainer;
+        container.scrollTop = container.scrollHeight;
+      });
+    },
+  },
   computed: {
-    ...mapState(["socket", "player", "gameData", "init"]),
+    ...mapState(["socket", "player", "gameData", "init", "chats"]),
     ...mapMutations([
       "updateGameData",
       "createNewPlayer",
@@ -757,6 +801,7 @@ export default {
       "updatePlayerToGameData",
       "updateDeadCharacter",
       "setFinalTurn",
+      "updateChat",
     ]),
     ...mapGetters(["opponents"]),
     isCharacterDraftedOrBurned(character) {
@@ -815,15 +860,7 @@ export default {
     startGame() {
       if (this.init === true) {
         this.charactersArray = [...DEFAULT_CHARACTERS_8];
-        let districtsDeck = new DistrictsDeck().shuffleDeck();
-        let charactersDeck = new CharacterDeck().newDeck(
-          DEFAULT_CHARACTERS_8,
-          CHARACTER_VALUES_8
-        );
-        this.burnCharacterCards(charactersDeck, this.gameData.players.length);
-
-        const decks = { districtsDeck, charactersDeck };
-        this.socket.emit("getDeckReady", decks);
+        this.socket.emit("getDeckReady");
 
         this.socket.on("initPlayerDetails", (gameData) => {
           store.commit("updateGameData", gameData);
@@ -885,6 +922,9 @@ export default {
     showPowerScreenHandler() {
       this.showPowerScreen = !this.showPowerScreen;
     },
+    onChatMessageType(e) {
+      this.chatMessage = e;
+    },
     displayFinalScores(scores) {
       this.finalScores = scores;
       this.showFinalScores = true;
@@ -927,7 +967,7 @@ export default {
       let card3 = this.gameData.districtsDeck.pop();
 
       this.player.cards.push(card1, card2, card3);
-
+      this.newChat(`${this.player.userName} used their Smithy!`, "System");
       store.commit("updatePlayerToGameData", this.player);
       this.socket.emit("updateGameData", this.gameData);
       this.smithyAbilityUsed = true;
@@ -959,6 +999,10 @@ export default {
       }
 
       this.player.cards.push({ ...this.graveYardCard });
+      this.newChat(
+        `${this.player.userName} used their Gravyard to get back ${this.graveYardCard.districtName}!`,
+        "System"
+      );
       this.player.gold--;
       this.graveYardCard = null;
       this.showGraveYard = false;
@@ -966,7 +1010,14 @@ export default {
       store.commit("updatePlayerToGameData", this.player);
       this.socket.emit("updateGameData", this.gameData);
     },
-
+    sendChat() {
+      this.newChat(this.chatMessage, this.player.userName);
+      this.chatMessage = "";
+    },
+    newChat(message, userName) {
+      let newChat = new Chat(message, userName);
+      this.socket.emit("newChat", newChat);
+    },
     useLaboratoryAbility() {
       if (this.laboratoryAbilityUsed) {
         return;
@@ -984,6 +1035,10 @@ export default {
       this.laboratoryAbilityUsed = true;
       this.isUsingLabratoryAbility = false;
       this.gameData.districtsDeck.push(card);
+      this.newChat(
+        `${this.player.userName} used their Labratory to discard ${card.districtName} for 1 gold.`,
+        "System"
+      );
       store.commit("updatePlayerToGameData", this.player);
       this.socket.emit("updateGameData", this.gameData);
     },
@@ -1007,10 +1062,13 @@ export default {
         this.isUsingSchoolOfMagicAbility = false;
         return;
       }
-
       schoolOfMagic.type = choice;
       this.isUsingSchoolOfMagicAbility = false;
       this.schoolOfMagicAbilityUsed = true;
+      this.newChat(
+        `${this.player.userName} changed their School of Magic to ${choice}!`,
+        "System"
+      );
 
       store.commit("updatePlayerToGameData", this.player);
       this.socket.emit("updateGameData", this.gameData);
@@ -1105,6 +1163,7 @@ export default {
           store.commit("setFinalTurn");
         }
       }
+      this.newChat(`${this.player.userName} played a district.`, "System");
       store.commit("updatePlayerToGameData", this.player);
       store.commit("updateGameData", this.gameData);
       this.socket.emit("districtPlayed", this.gameData);
@@ -1124,6 +1183,7 @@ export default {
       const index = this.gameData.charactersDeck.indexOf(character);
       this.gameData.charactersDeck[index].drafted = true;
       this.showCharacterCards = false;
+      this.newChat(`${this.player.userName} has drafted a character`, "System");
       this.socket.emit("nextDraftRound", this.gameData);
     },
     removeKingStatus() {
@@ -1183,6 +1243,7 @@ export default {
     gatherGoldHandler() {
       this.gatherResources = false;
       this.player.gold += 2;
+      this.newChat(`${this.player.userName} chose to gather 2 gold.`, "System");
       store.commit("updatePlayerToGameData", this.player);
       this.socket.emit("updateGameData", this.gameData);
     },
@@ -1191,10 +1252,14 @@ export default {
       let card1 = this.gameData.districtsDeck.shift();
       let card2 = this.gameData.districtsDeck.shift();
       let card3;
-
+      this.newChat(`${this.player.userName} chose to draw a card.`, "System");
       if (this.doesPlayerHaveObservatory) {
         console.log("PLAYER HAS OBSERVATORY");
         card3 = this.gameData.districtsDeck.shift();
+        this.newChat(
+          `${this.player.userName} has the observatory, and drew an extra card.`,
+          "System"
+        );
       }
       this.resourceGatherCards = card3 ? [card1, card2, card3] : [card1, card2];
       store.commit("updateGameData", this.gameData);
@@ -1266,6 +1331,10 @@ export default {
         return;
       }
       foundPlayer.isAlive = false;
+      this.newChat(
+        `${this.player.userName} as the Assassin has killed the ${characterName}!`,
+        "System"
+      );
       store.commit("updatePlayerToGameData", foundPlayer);
       this.socket.emit("updateGameData", this.gameData);
       this.powerUsed = true;
@@ -1280,7 +1349,12 @@ export default {
       store.commit("updatePlayerToGameData", this.player);
       this.socket.emit("updateGameData", this.gameData);
     },
-    markPlayerForTheft(gameData, playerToStealFrom) {
+    markPlayerForTheft(gameData, playerToStealFrom, characterName) {
+      console.log(playerToStealFrom);
+      this.newChat(
+        `${this.player.userName} as the Thief will be stealing from the ${characterName}.`,
+        "System"
+      );
       let foundPlayer = gameData.players.find(
         (player) => player === playerToStealFrom
       );
@@ -1309,6 +1383,10 @@ export default {
 
       this.player.cards = [...foundPlayer.cards];
       foundPlayer.cards = [...copyPlayer1Cards];
+      this.newChat(
+        `${this.player.userName} as the Magician traded cards with ${playerToTradeWith.userName}.`,
+        "System"
+      );
       store.commit("updatePlayerToGameData", foundPlayer);
       store.commit("updatePlayerToGameData", this.player);
       this.socket.emit("updateGameData", this.gameData);
@@ -1342,6 +1420,10 @@ export default {
         this.cardsToBeTradedWithDeck = [];
         this.isTradingWithDeck = false;
         this.powerUsed = true;
+        this.newChat(
+          `${this.player.userName} as the Magician traded cards with the deck.`,
+          "System"
+        );
         store.commit("updatePlayerToGameData", this.player);
         this.socket.emit("updateGameData", this.gameData);
       }
@@ -1358,6 +1440,10 @@ export default {
 
         this.isUsingPower = false;
         this.canCollectByType = false;
+        this.newChat(
+          `${this.player.userName} used the Kings power to collect ${numberOfYellows} gold.`,
+          "System"
+        );
 
         store.commit("updatePlayerToGameData", this.player);
         this.socket.emit("updateGameData", this.gameData);
@@ -1375,7 +1461,10 @@ export default {
 
         this.isUsingPower = false;
         this.canCollectByType = false;
-
+        this.newChat(
+          `${this.player.userName} used the merchants power to collect ${numberOfGreens} gold.`,
+          "System"
+        );
         store.commit("updatePlayerToGameData", this.player);
         this.socket.emit("updateGameData", this.gameData);
         return;
@@ -1392,7 +1481,10 @@ export default {
 
         this.isUsingPower = false;
         this.canCollectByType = false;
-
+        this.newChat(
+          `${this.player.userName} used the Warlords power to collect ${numberOfReds} gold.`,
+          "System"
+        );
         store.commit("updatePlayerToGameData", this.player);
         this.socket.emit("updateGameData", this.gameData);
         return;
@@ -1414,6 +1506,10 @@ export default {
 
         this.isUsingPower = false;
         this.canCollectByType = false;
+        this.newChat(
+          `${this.player.userName} used the Bishops power to collect ${numberOfBlues} gold.`,
+          "System"
+        );
         store.commit("updatePlayerToGameData", this.player);
         this.socket.emit("updateGameData", this.gameData);
       }
@@ -1435,6 +1531,10 @@ export default {
         store.commit("updatePlayerToGameData", this.player);
         this.socket.emit("updateGameData", this.gameData);
         this.showCommunityBuildingScreen = false;
+        this.newChat(
+          `${this.player.userName} as the Bishop cancelled the community build.`,
+          "System"
+        );
         return;
       }
 
@@ -1445,7 +1545,8 @@ export default {
       this.cardCanBePlayed = false;
       this.districtPlayed = true;
       this.communityBuildCompleted = true;
-      store.commit("updatePlayerToGameData", targetPlayer);
+      `${this.player.userName} the Bishop used the community build power to gold from ${targetPlayer.userName}.`,
+        store.commit("updatePlayerToGameData", targetPlayer);
       store.commit("updatePlayerToGameData", this.player);
       this.socket.emit("updateGameData", this.gameData);
       this.showCommunityBuildingScreen = false;
@@ -1456,8 +1557,8 @@ export default {
     collectTwoCards() {
       let card1 = this.gameData.districtsDeck.shift();
       let card2 = this.gameData.districtsDeck.shift();
-
-      this.player.cards.push(card1);
+      `${this.player.userName} as the Architect got two cards.`,
+        this.player.cards.push(card1);
       this.player.cards.push(card2);
 
       store.commit("updatePlayerToGameData", this.player);
@@ -1538,6 +1639,31 @@ export default {
   overflow-y: auto;
 }
 
+.chats-container {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.chats {
+  width: 25rem;
+  height: 5rem;
+  background-color: #380256;
+  border: 2px solid #8143a3;
+  box-shadow: inset 5px 10px 4px 5px rgba(0, 0, 0, 0.25);
+
+  overflow-y: auto;
+  color: white;
+}
+
+.chat-message {
+  font-size: 11px;
+  display: flex;
+  gap: 3px;
+  padding-inline: 8px;
+  max-width: 23rem;
+}
+
 .final-place {
   font-size: 1.5rem;
   font-weight: 600;
@@ -1605,6 +1731,10 @@ export default {
   color: white;
   font-size: 14px;
   font-weight: 600;
+}
+
+.system-message {
+  color: yellow;
 }
 
 .trade-with-deck-container {
