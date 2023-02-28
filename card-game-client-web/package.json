@@ -1,5 +1,5 @@
 {
-  "name": "card-game-client-web",
+  "name": "citadels-online-beta",
   "version": "0.1.0",
   "scripts": {
     "dev": "vite",
