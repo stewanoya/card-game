@@ -540,7 +540,11 @@
         :jobDescription="character.jobDescription"
         @click="draftCharacter(character)"
         class="character-card"
-        :class="character.burned || character.drafted ? 'hide-card' : null"
+        :class="
+          character.isFaceUp || character.burned || character.drafted
+            ? 'hide-card'
+            : null
+        "
       />
     </div>
 
@@ -557,6 +561,16 @@
           :graveYardAbilityCheck="graveYardAbilityCheck"
         />
         <div class="districts-deck">
+          <div style="display: flex; gap: 15px; margin-bottom: 1rem">
+            <h1>Burned Cards</h1>
+            <n-tag
+              type="error"
+              round
+              v-for="character in burnedFaceUpCharacters"
+              :key="character.name"
+              >{{ character.name }}</n-tag
+            >
+          </div>
           Deck: <strong>{{ gameData.districtsDeck.length }}</strong>
         </div>
         <draggable
@@ -640,7 +654,7 @@
 </template>
 
 <script setup>
-import { NButton, NTooltip, NCard, NInput } from "naive-ui";
+import { NButton, NTooltip, NCard, NInput, NTag } from "naive-ui";
 import Chat from "../models/Chat";
 </script>
 
@@ -663,6 +677,7 @@ import OpponentsContainer from "@/components/OpponentsContainer.vue";
 export default {
   data() {
     return {
+      initDraft: false,
       drag: false,
       chatMessage: "",
       smithyAbilityUsed: false,
@@ -811,6 +826,9 @@ export default {
       return false;
     },
 
+    burnedFaceUpCharacters() {
+      return this.gameData.charactersDeck.filter((c) => c.isFaceUp);
+    },
     draftedCharacterName() {
       return this.player.character.name;
     },
@@ -863,10 +881,19 @@ export default {
         this.socket.emit("getDeckReady");
 
         this.socket.on("initPlayerDetails", (gameData) => {
+          console.log("is it sending initPlayerDetails twice?");
           store.commit("updateGameData", gameData);
           store.commit("updatePlayers", gameData.players);
           store.commit("updatePlayerFromGameData", gameData.players);
-          this.socket.emit("beginDraft", gameData);
+          // console.log("gameData", gameData);
+          if (
+            gameData.initOrderOfPlayers[0].userName === this.player.userName &&
+            !this.initDraft
+          ) {
+            this.initDraft = true;
+            console.log("BEGIN DRAFT ONLY GETTING CALLED ONCE");
+            this.socket.emit("beginDraft", gameData);
+          }
         });
       }
     },
@@ -883,11 +910,62 @@ export default {
 
       this.socket.emit("beginDraft", this.gameData);
     },
+    //TODO: MOVE ALL BURNING TO SERVER SIDE
+    // THIS FUNCTION IS REPEATED ON BOTH CLIENT SIDE AND SERVER SIDE
     burnCharacterCards(charactersDeck, numberOfPlayers) {
-      return charactersDeck.splice(
-        Math.floor(Math.random() * charactersDeck.length),
-        1
-      );
+      if (numberOfPlayers === 6) {
+        let indexToBurn = Math.floor(Math.random() * charactersDeck.length);
+        charactersDeck[indexToBurn].burned = true;
+        console.log("HERE IS CHARACTERS DECK", charactersDeck);
+      }
+
+      if (numberOfPlayers === 5) {
+        let indexToBurn = Math.floor(Math.random() * charactersDeck.length);
+        charactersDeck[indexToBurn].burned = true;
+        let indexToFlip = indexToBurn;
+        while (indexToBurn === indexToFlip) {
+          indexToFlip = Math.floor(Math.random() * charactersDeck.length);
+          // we cant burn king face up, so we just set it equal to index to burn to loop again.
+          if (charactersDeck[indexToFlip].name === "King") {
+            console.log("tried to burn king face up, rerolling");
+            indexToFlip = indexToBurn;
+            continue;
+          }
+        }
+        charactersDeck[indexToFlip].isFaceUp = true;
+      }
+
+      if (numberOfPlayers === 4) {
+        let indexToBurn = Math.floor(Math.random() * charactersDeck.length);
+        charactersDeck[indexToBurn].burned = true;
+        let indexToFlip = indexToBurn;
+        while (indexToBurn === indexToFlip) {
+          indexToFlip = Math.floor(Math.random() * charactersDeck.length);
+          // we cant burn king face up, so we just set it equal to index to burn to loop again.
+          if (charactersDeck[indexToFlip].name === "King") {
+            console.log("tried to burn king face up, rerolling");
+            indexToFlip = indexToBurn;
+            continue;
+          }
+        }
+        charactersDeck[indexToFlip].isFaceUp = true;
+
+        let indexToFlip2 = indexToBurn;
+        while (indexToFlip2 === indexToBurn) {
+          indexToFlip2 = Math.floor(Math.random() * charactersDeck.length);
+
+          if (
+            indexToFlip2 === indexToFlip ||
+            charactersDeck[indexToFlip2].name === "King"
+          ) {
+            indexToFlip2 = indexToBurn;
+            continue;
+          }
+        }
+        charactersDeck[indexToFlip2].isFaceUp = true;
+      }
+      store.commit("updateGameData", this.gameData);
+      this.socket.emit("updateGameData", this.gameData);
     },
     resetLocalValues() {
       this.drag = false;
@@ -1994,6 +2072,11 @@ h2 {
 
 .character-card:hover {
   cursor: pointer;
+}
+
+.character-card-burned-faceup {
+  width: 3rem;
+  height: 6rem;
 }
 
 .cancel-destroying-button {

@@ -104,6 +104,69 @@ export default {
   justify-content: space-around;
 }
 
+.four-player-positioning {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  position: relative;
+}
+
+.four-player-positioning--item:last-child {
+  grid-row-start: 2;
+  grid-column-start: 2;
+  top: -50px;
+
+  left: 99%;
+}
+
+.four-player-positioning--item:first-child {
+  grid-row-start: 2;
+  top: -70px;
+  left: -30%;
+}
+
+.four-player-positioning--item:nth-child(2) {
+  grid-row-start: 1;
+  grid-column-start: 2;
+  top: -130px;
+
+  left: -10%;
+}
+
+.five-player-positioning {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  position: relative;
+}
+
+.five-player-positioning--item:first-child {
+  grid-row-start: 3;
+  top: -90px;
+  left: -30%;
+}
+
+.five-player-positioning--item:nth-child(2) {
+  grid-row-start: 1;
+  grid-column-start: 2;
+  top: -130px;
+
+  left: 0%;
+}
+.five-player-positioning--item:nth-child(3) {
+  grid-row-start: 1;
+  grid-column-start: 3;
+  top: -130px;
+  left: -10%;
+}
+.five-player-positioning--item:last-child {
+  grid-row-start: 3;
+  grid-column-start: 3;
+  top: -100px;
+
+  left: 95%;
+}
+
 .three-player-positioning--item {
   margin-top: -130px;
 }
