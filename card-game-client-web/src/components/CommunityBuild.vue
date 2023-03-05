@@ -19,7 +19,7 @@
           trigger="click"
           style="width: 300px"
         >
-          <template #trigger class="unique-description">
+          <template #trigger>
             <n-button style="margin-left: 10px" type="info" circle size="small">
               ?
             </n-button>
@@ -162,7 +162,7 @@ export default {
       }
 
       // PLAYER CAN AFFORD CARD ON THEIR OWN
-      if (this.player.gold >= this.cardToBeBuilt[0].cost) {
+      if (this.player.gold >= Number(this.cardToBeBuilt[0].cost)) {
         return false;
       }
 
@@ -194,9 +194,6 @@ export default {
     },
   },
   methods: {
-    targetPlayerHanlder(event) {
-      console.log(event);
-    },
     submitCommunityBuild() {
       this.transactionHandler(
         this.cardToBeBuilt,
