@@ -51,7 +51,7 @@
           <DistrictCard
             v-for="card in resourceGatherCards"
             :class="{
-              'selected-to-gather': !!this.selectedResourceGatherCards.find(
+              'selected-to-gather': !!selectedResourceGatherCards.find(
                 (s) => s.id === card.id
               ),
             }"
@@ -68,7 +68,7 @@
           v-if="doesPlayerHaveLibrary"
           type="success"
           size="large"
-          :disable="this.selectedResourceGatherCards.length < 2"
+          :disable="selectedResourceGatherCards.length < 2"
           @click="submitMultipleResourceGatherCards"
           >Submit choices</n-button
         >
@@ -189,7 +189,7 @@
       />
       <div style="display: flex; gap: 1rem">
         <n-button
-          :disabled="this.player.gold < 1"
+          :disabled="player.gold < 1"
           type="success"
           size="large"
           @click="useGraveYardAbility(true)"

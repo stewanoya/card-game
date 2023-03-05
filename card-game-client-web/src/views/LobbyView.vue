@@ -8,7 +8,7 @@
         placeholder="Make it unique!"
       />
       <n-button type="success" @click="initConnect">Connect</n-button>
-      <p v-if="this.error">{{ error }}</p>
+      <p v-if="error">{{ error }}</p>
     </div>
     <Lobby
       :players="gameData ? gameData.players : []"
