@@ -936,7 +936,7 @@ export default {
       this.charactersArray = [...DEFAULT_CHARACTERS_8];
     },
     showPowerScreenHandler() {
-      this.showPowerScreen = !this.showPowerScreen;
+      this.socket.emit("showPowerScreen");
     },
     onChatMessageType(e) {
       this.chatMessage = e;
@@ -1341,24 +1341,25 @@ export default {
     },
     //TODO: move this next
     killPlayer(gameData, playerToKill, characterName) {
-      store.commit("updateDeadCharacter", characterName);
-      let foundPlayer = gameData.players.find(
-        (player) => player === playerToKill
-      );
-      if (!foundPlayer) {
-        this.powerUsed = true;
-        this.showPowerScreen = false;
-        return;
-      }
-      foundPlayer.isAlive = false;
-      this.newChat(
-        `${this.player.userName} as the Assassin has killed the ${characterName}!`,
-        "System"
-      );
-      store.commit("updatePlayerToGameData", foundPlayer);
-      this.socket.emit("updateGameData", this.gameData);
-      this.powerUsed = true;
-      this.showPowerScreen = false;
+      // store.commit("updateDeadCharacter", characterName);
+      // let foundPlayer = gameData.players.find(
+      //   (player) => player === playerToKill
+      // );
+      // if (!foundPlayer) {
+      //   this.powerUsed = true;
+      //   this.showPowerScreen = false;
+      //   return;
+      // }
+      // foundPlayer.isAlive = false;
+      // this.newChat(
+      //   `${this.player.userName} as the Assassin has killed the ${characterName}!`,
+      //   "System"
+      // );
+      // store.commit("updatePlayerToGameData", foundPlayer);
+      // this.socket.emit("updateGameData", this.gameData);
+      // this.powerUsed = true;
+      // this.showPowerScreen = false;
+      this.socket.emit("killPlayer", characterName)
     },
     giveAllGold() {
       // let playerTaking = this.getPlayerByCharacterName("Thief");

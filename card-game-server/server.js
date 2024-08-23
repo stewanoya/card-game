@@ -165,6 +165,28 @@ io.on("connection", (socket) => {
     io.emit("updateGameData", gameData);
   });
 
+  socket.on("showPowerScreen", () => {
+    let currentPlayer = gameData.getCurrentPlayer();
+    currentPlayer.showPowerScreen = !currentPlayer.showPowerScreen;
+  })
+
+  socket.on("killPlayer", (characterName) => {
+    let currentPlayer = gameData.getCurrentPlayer();
+
+    gameData.deadCharacter = characterName;
+
+    let foundPlayerToKill = gameData.getPlayerByCharacterName(characterName);
+    
+    if (foundPlayerToKill) {
+      foundPlayerToKill.isAlive = false;
+    }
+    // this.newChat(
+    //   `${this.player.userName} as the Assassin has killed the ${characterName}!`,
+    //   "System"
+    // );
+    io.emit("updateGameData", gameData);
+  })
+
   socket.on("markPlayerForTheft", (playerToStealFrom) => {
     // this.newChat(
     //   `${this.player.userName} as the Thief will be stealing from the ${characterName}.`,
