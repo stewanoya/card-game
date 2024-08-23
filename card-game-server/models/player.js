@@ -1,7 +1,4 @@
-import { getPlayerByCharacterName } from "card-game-server/helpers/player-helpers";
-
 export default class Player {
-  id = '' // socket id
   drag = false;
   cardCanBePlayed = false;
   rememberCardCost = undefined;
@@ -84,27 +81,7 @@ export default class Player {
     this.smithyAbilityUsed = false;
     this.schoolOfMagicAbilityUsed = false;
     this.finalScores = [];
-  }
-
-  checkIfPlayerIsKing = () => {
-    if (this.character.name === "King") {
-      this.removeKingStatus();
-      this.isKing = true;
-      return true;
-    }
-  
-    return false;
-  }
-
-  giveAllGoldToTheif = (players) => {
-    let playerTaking = getPlayerByCharacterName("Thief", players);
-    if (playerTaking) {
-      playerTaking.gold += this.player.gold;
-      this.gold = 0;
-      this.isMarkedForTheft = false;
-    } else {
-      console.log("NO THEIF FOUND, HOW WERE THEY MARKED FOR THEFT??")
-    }
+    this.charactersArray = [...DEFAULT_CHARACTERS_8];
   }
 
   useCharacterPower() {

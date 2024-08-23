@@ -1,15 +1,22 @@
-const cors = require("cors");
-require("dotenv").config();
-const app = require("express")();
+import dotenv from "dotenv";
+import cors from "cors";
+import express from "express";
+import { Server } from 'socket.io';
+import { createServer } from 'http'
+import { v4 } from "uuid";
+import GameData from "./models/gameData.js";
+
 const corsOptions = {
   origin: "*",
   credentials: true, //access-control-allow-credentials:true
   optionSuccessStatus: 200,
 };
-
+dotenv.config();
+const app = express();
 app.use(cors());
-const http = require("http").createServer(app);
-const io = require("socket.io")(http, {
+
+const http = createServer(app);
+const io = new Server(http, {
   cors: {
     origin: [
       "http://localhost:3000",
@@ -25,19 +32,8 @@ const io = require("socket.io")(http, {
     methods: ["GET", "POST"],
   },
 });
-const { v4: uuidv4 } = require("uuid");
 // could make it an array of objects to hold more data
-let gameData = {
-  chats: [],
-  players: [],
-  host: "",
-  currentTurn: undefined,
-  districtsDeck: [],
-  charactersDeck: [],
-  gameStarted: false,
-  finalTurn: false,
-  finishedFirst: "",
-};
+let gameData = new GameData();
 let firstDraftRound = true;
 
 io.on("connection", (socket) => {
@@ -55,26 +51,30 @@ io.on("connection", (socket) => {
     io.emit("connectedPlayer", gameData.players);
   });
 
-  if (!gameData.gameStarted) {
-    socket.on("getDeckReady", (decks) => {
-      gameData.districtsDeck = decks.districtsDeck;
-      gameData.charactersDeck = decks.charactersDeck;
-      gameData.districtsDeck.forEach((card) => {
-        card.id = uuidv4();
-      });
-      gameData.initOrderOfPlayers = [...gameData.players];
-      gameData.players.forEach((player) => {
-        let card1 = gameData.districtsDeck.shift();
-        let card2 = gameData.districtsDeck.shift();
-        let card3 = gameData.districtsDeck.shift();
-        let card4 = gameData.districtsDeck.shift();
-        player.cards = [card1, card2, card3, card4];
-        player.gold = 2;
-      });
-      io.emit("initPlayerDetails", gameData);
-      gameData.gameStarted = true;
+
+  socket.on("getDeckReady", (decks) => {
+    if (gameData.gameStarted) {
+      return;
+    }
+    gameData.districtsDeck = decks.districtsDeck;
+    gameData.charactersDeck = decks.charactersDeck;
+    gameData.districtsDeck.forEach((card) => {
+      card.id = v4();
     });
-  }
+    gameData.initOrderOfPlayers = [...gameData.players];
+    gameData.players.forEach((player) => {
+      let card1 = gameData.districtsDeck.shift();
+      let card2 = gameData.districtsDeck.shift();
+      let card3 = gameData.districtsDeck.shift();
+      let card4 = gameData.districtsDeck.shift();
+      player.cards = [card1, card2, card3, card4];
+      player.gold = 2;
+    });
+    io.emit("initPlayerDetails", gameData);
+    gameData.gameStarted = true;
+    gameData.currentTurn = gameData.players[0].userName;
+    io.emit("draftRound", gameData);
+  });
 
   socket.on("gameStart", () => {
     io.emit("gameStartedByHost");
@@ -121,15 +121,147 @@ io.on("connection", (socket) => {
       // this can probably be it's own function - sortPlayersByKing - DONE
     }
 
+    if (gameData.lastCardDestroyed) {
+      gameData.graveYardAbilityCheck();
+    }
+
     gameData.currentTurn = nextPlayerTurn.userName;
 
-    io.emit("nextPlayerTurn", gameData);
-  });
+    nextPlayerTurn.gatherResources = true;
+    //TODO: maybe create system chat to say this player is king?
+    const isKing = nextPlayerTurn.checkIfPlayerIsKing();
 
-  socket.on("updateGameData", (newGameData) => {
-    gameData = newGameData;
+    if (isKing) {
+      // remove king status on previous king
+      gameData.removeKingStatusFromPrevKing();
+    }
+
+    if (nextPlayerTurn.isAlive === false) {
+      nextPlayerTurn.isAlive = true;
+      //TODO: Handle turn ended if assassinated
+      // this.socket.emit("turnEnded", this.gameData);
+    }
+
+    if (nextPlayerTurn.isMarkedForTheft) {
+      nextPlayerTurn.giveAllGoldToTheif(gameData.players);
+    }
+
     io.emit("updateGameData", gameData);
   });
+
+  socket.on("markPlayerForTheft", (playerToStealFrom) => {
+    // this.newChat(
+    //   `${this.player.userName} as the Thief will be stealing from the ${characterName}.`,
+    //   "System"
+    // );
+    let currentPlayerTurn = gameData.getCurrentPlayer();
+    let foundPlayer = gameData.players.find(
+      (player) => player.id === playerToStealFrom.id
+    );
+    if (foundPlayer) {
+      foundPlayer.isMarkedForTheft = true;
+    }
+    currentPlayerTurn.powerUsed = true;
+    currentPlayerTurn.showPowerScreen = false;
+    io.emit("updateGameData", gameData);
+  })
+
+  socket.on("destroyCard", ({cardToDestroy, targetUserName}) => {
+    let currentPlayer = gameData.getCurrentPlayer();
+    console.log(cardToDestroy);
+
+    if (cardToDestroy.districtName === "Keep") {
+      return;
+    }
+
+    let costSubtraction = -1;
+    let hasGreatWall = gameData.doesPlayerHaveGreatWall(targetUserName);
+    console.log("HASGREATWALL", hasGreatWall);
+
+    costSubtraction = hasGreatWall && cardToDestroy.districtName !== "Great Wall" ? 0 : 1;
+
+    console.log("costSubtraction dcHandler", hasGreatWall);
+    if (currentPlayer.gold < Number(cardToDestroy.cost) - costSubtraction) {
+      console.log("NOT ENOUGH MONEY");
+      return;
+    }
+
+    if (this.playedCards.length === 7) {
+      console.log("CITY COMPLETE");
+      //do nothing if completed city
+      return;
+    }
+
+    const data = { cardToDestroy, targetUserName, greatWall: hasGreatWall };
+    gameData.destroyPlayedCard(data);
+    gameData.lastCardDestroyed = { targetUserName, cardData: cardToDestroy };
+    currentPlayer.isDestroying = false;
+    currentPlayer.canDestroy = false;
+    // store.commit("destroyPlayedCard", data);
+    io.emit("updateGameData", this.gameData);
+  })
+
+  socket.on("burnCards", () => {
+    const numberOfPlayers = gameData.players.length;
+    const charactersDeck = gameData.charactersDeck;
+    if (numberOfPlayers === 6) {
+      let indexToBurn = Math.floor(Math.random() * charactersDeck.length);
+      charactersDeck[indexToBurn].burned = true;
+      console.log("HERE IS CHARACTERS DECK", charactersDeck);
+    }
+
+    if (numberOfPlayers === 5) {
+      let indexToBurn = Math.floor(Math.random() * charactersDeck.length);
+      charactersDeck[indexToBurn].burned = true;
+      let indexToFlip = indexToBurn;
+      while (indexToBurn === indexToFlip) {
+        indexToFlip = Math.floor(Math.random() * charactersDeck.length);
+        // we cant burn king face up, so we just set it equal to index to burn to loop again.
+        if (charactersDeck[indexToFlip].name === "King") {
+          console.log("tried to burn king face up, rerolling");
+          indexToFlip = indexToBurn;
+          continue;
+        }
+      }
+      charactersDeck[indexToFlip].isFaceUp = true;
+    }
+
+    if (numberOfPlayers === 4) {
+      let indexToBurn = Math.floor(Math.random() * charactersDeck.length);
+      charactersDeck[indexToBurn].burned = true;
+      let indexToFlip = indexToBurn;
+      while (indexToBurn === indexToFlip) {
+        indexToFlip = Math.floor(Math.random() * charactersDeck.length);
+        // we cant burn king face up, so we just set it equal to index to burn to loop again.
+        if (charactersDeck[indexToFlip].name === "King") {
+          console.log("tried to burn king face up, rerolling");
+          indexToFlip = indexToBurn;
+          continue;
+        }
+      }
+      charactersDeck[indexToFlip].isFaceUp = true;
+
+      let indexToFlip2 = indexToBurn;
+      while (indexToFlip2 === indexToBurn) {
+        indexToFlip2 = Math.floor(Math.random() * charactersDeck.length);
+
+        if (
+          indexToFlip2 === indexToFlip ||
+          charactersDeck[indexToFlip2].name === "King"
+        ) {
+          indexToFlip2 = indexToBurn;
+          continue;
+        }
+      }
+      charactersDeck[indexToFlip2].isFaceUp = true;
+    }
+    io.emit("updateGameData", gameData);
+  })
+
+  // socket.on("updateGameData", (newGameData) => {
+  //   gameData = newGameData;
+  //   io.emit("updateGameData", gameData);
+  // });
 
   socket.on("nextDraftRound", (newGameData) => {
     gameData = newGameData;
@@ -193,19 +325,7 @@ io.on("connection", (socket) => {
     }
 
     if (gameData.players.length == 0) {
-      gameData = {
-        chats: [],
-        districtsDeck: [],
-        charactersDeck: [],
-        players: [],
-        currentTurn: undefined,
-        initOrderOfPlayers: [],
-        deadCharacter: null,
-        finalTurn: false,
-        gameStarted: false,
-        finishedFirst: "",
-      };
-      firstDraftRound = true;
+      gameData.reset();
       // TODO: Think of a better solution for no players in room.
     }
   });

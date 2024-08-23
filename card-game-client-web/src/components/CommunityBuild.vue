@@ -7,6 +7,7 @@
           <option selected disabled hidden>Please Choose a Player</option>
           <option
             class="option"
+            @click="targetPlayer = opponent"
             v-for="opponent in opponents"
             :key="opponent.userName"
             :value="opponent"
@@ -128,7 +129,7 @@ export default {
   data() {
     return {
       drag: false,
-      targetPlayer: undefined,
+      targetPlayer: null,
       cardToBeBuilt: [],
       cardsToGiveUp: [],
     };
@@ -152,7 +153,7 @@ export default {
       // COST IS A STRING!!!!!!
 
       // NO PLAYER CHECK
-      if (this.targetPlayer === undefined) {
+      if (!this.targetPlayer) {
         return false;
       }
 

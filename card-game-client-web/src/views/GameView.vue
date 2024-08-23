@@ -718,7 +718,20 @@ export default {
       store.commit("updateGameData", gameData);
       this.draftRound();
     });
-
+    this.socket.on("initPlayerDetails", (gameData) => {
+      store.commit("updateGameData", gameData);
+      store.commit("updatePlayers", gameData.players);
+      store.commit("updatePlayerFromGameData", gameData.players);
+      // console.log("gameData", gameData);
+      // if (
+      //   gameData.initOrderOfPlayers[0].userName === this.player.userName &&
+      //   !this.initDraft
+      // ) {
+      //   this.initDraft = true;
+      //   console.log("BEGIN DRAFT ONLY GETTING CALLED ONCE");
+      //   this.socket.emit("beginDraft", gameData);
+      // }
+    });
     this.socket.on("disonnectedPlayerDuringGame", (gameData) => {
       store.commit("updateGameData", gameData);
     });
@@ -741,13 +754,6 @@ export default {
     });
 
     this.socket.on("updateGameData", (gameData) => {
-      if (
-        gameData.lastCardDestroyed &&
-        gameData.lastCardDestroyed.userName &&
-        gameData.currentTurn !== this.player.userName
-      ) {
-        this.graveYardAbilityCheck(gameData.lastCardDestroyed);
-      }
       store.commit("updateGameData", gameData);
       store.commit("updatePlayerFromGameData", gameData.players);
       console.log("gamedata was updated!", this.gameData);
@@ -877,24 +883,8 @@ export default {
   methods: {
     startGame() {
       if (this.init === true) {
-        this.charactersArray = [...DEFAULT_CHARACTERS_8];
         this.socket.emit("getDeckReady");
 
-        this.socket.on("initPlayerDetails", (gameData) => {
-          console.log("is it sending initPlayerDetails twice?");
-          store.commit("updateGameData", gameData);
-          store.commit("updatePlayers", gameData.players);
-          store.commit("updatePlayerFromGameData", gameData.players);
-          // console.log("gameData", gameData);
-          if (
-            gameData.initOrderOfPlayers[0].userName === this.player.userName &&
-            !this.initDraft
-          ) {
-            this.initDraft = true;
-            console.log("BEGIN DRAFT ONLY GETTING CALLED ONCE");
-            this.socket.emit("beginDraft", gameData);
-          }
-        });
       }
     },
     nextGameRound() {
@@ -902,7 +892,7 @@ export default {
         DEFAULT_CHARACTERS_8,
         CHARACTER_VALUES_8
       );
-      this.burnCharacterCards(charactersDeck, this.gameData.players.length);
+      this.burnCharacterCards();
       this.gameData.charactersDeck = [...charactersDeck];
 
       store.commit("updateGameData", this.gameData);
@@ -912,60 +902,8 @@ export default {
     },
     //TODO: MOVE ALL BURNING TO SERVER SIDE
     // THIS FUNCTION IS REPEATED ON BOTH CLIENT SIDE AND SERVER SIDE
-    burnCharacterCards(charactersDeck, numberOfPlayers) {
-      if (numberOfPlayers === 6) {
-        let indexToBurn = Math.floor(Math.random() * charactersDeck.length);
-        charactersDeck[indexToBurn].burned = true;
-        console.log("HERE IS CHARACTERS DECK", charactersDeck);
-      }
-
-      if (numberOfPlayers === 5) {
-        let indexToBurn = Math.floor(Math.random() * charactersDeck.length);
-        charactersDeck[indexToBurn].burned = true;
-        let indexToFlip = indexToBurn;
-        while (indexToBurn === indexToFlip) {
-          indexToFlip = Math.floor(Math.random() * charactersDeck.length);
-          // we cant burn king face up, so we just set it equal to index to burn to loop again.
-          if (charactersDeck[indexToFlip].name === "King") {
-            console.log("tried to burn king face up, rerolling");
-            indexToFlip = indexToBurn;
-            continue;
-          }
-        }
-        charactersDeck[indexToFlip].isFaceUp = true;
-      }
-
-      if (numberOfPlayers === 4) {
-        let indexToBurn = Math.floor(Math.random() * charactersDeck.length);
-        charactersDeck[indexToBurn].burned = true;
-        let indexToFlip = indexToBurn;
-        while (indexToBurn === indexToFlip) {
-          indexToFlip = Math.floor(Math.random() * charactersDeck.length);
-          // we cant burn king face up, so we just set it equal to index to burn to loop again.
-          if (charactersDeck[indexToFlip].name === "King") {
-            console.log("tried to burn king face up, rerolling");
-            indexToFlip = indexToBurn;
-            continue;
-          }
-        }
-        charactersDeck[indexToFlip].isFaceUp = true;
-
-        let indexToFlip2 = indexToBurn;
-        while (indexToFlip2 === indexToBurn) {
-          indexToFlip2 = Math.floor(Math.random() * charactersDeck.length);
-
-          if (
-            indexToFlip2 === indexToFlip ||
-            charactersDeck[indexToFlip2].name === "King"
-          ) {
-            indexToFlip2 = indexToBurn;
-            continue;
-          }
-        }
-        charactersDeck[indexToFlip2].isFaceUp = true;
-      }
-      store.commit("updateGameData", this.gameData);
-      this.socket.emit("updateGameData", this.gameData);
+    burnCharacterCards() {
+      this.socket.emit("burnCards");
     },
     resetLocalValues() {
       this.drag = false;
@@ -1050,23 +988,23 @@ export default {
       this.socket.emit("updateGameData", this.gameData);
       this.smithyAbilityUsed = true;
     },
-    graveYardAbilityCheck({ userName, cardData }) {
-      if (this.player.userName !== userName) {
-        console.log("NOT THIS PLAYER");
-        return;
-      }
+    // graveYardAbilityCheck({ userName, cardData }) {
+    //   if (this.player.userName !== userName) {
+    //     console.log("NOT THIS PLAYER");
+    //     return;
+    //   }
 
-      if (!this.doesPlayerHaveGraveyard) {
-        console.log("PLAYER DOESN'T HAVE GRAVEYARD");
+    //   if (!this.doesPlayerHaveGraveyard) {
+    //     console.log("PLAYER DOESN'T HAVE GRAVEYARD");
 
-        return;
-      }
+    //     return;
+    //   }
 
-      this.graveYardCard = cardData;
-      this.showGraveYard = true;
-      console.log("GRAVEYARD SHOW", this.showGraveYard);
-      console.log("FOR THIS CARD", cardData);
-    },
+    //   this.graveYardCard = cardData;
+    //   this.showGraveYard = true;
+    //   console.log("GRAVEYARD SHOW", this.showGraveYard);
+    //   console.log("FOR THIS CARD", cardData);
+    // },
     useGraveYardAbility(choiceToKeep) {
       if (!choiceToKeep) {
         this.graveYardCard = null;
@@ -1264,21 +1202,21 @@ export default {
       this.newChat(`${this.player.userName} has drafted a character`, "System");
       this.socket.emit("nextDraftRound", this.gameData);
     },
-    removeKingStatus() {
-      for (let player of this.gameData.players) {
-        player.isKing = false;
-      }
-    },
-    checkIfPlayerIsKing() {
-      if (this.player.character.name === "King") {
-        this.removeKingStatus();
-        store.commit("updateGameData", this.gameData);
-        this.player.isKing = true;
-        store.commit("updatePlayerToGameData", this.player);
-        this.socket.emit("updateGameData", this.gameData);
-      }
-      // player will get updated in store when they collect resources or use power
-    },
+    // removeKingStatus() {
+    //   for (let player of this.gameData.players) {
+    //     player.isKing = false;
+    //   }
+    // },
+    // checkIfPlayerIsKing() {
+    //   if (this.player.character.name === "King") {
+    //     this.removeKingStatus();
+    //     store.commit("updateGameData", this.gameData);
+    //     this.player.isKing = true;
+    //     store.commit("updatePlayerToGameData", this.player);
+    //     this.socket.emit("updateGameData", this.gameData);
+    //   }
+    //   // player will get updated in store when they collect resources or use power
+    // },
     startPlayerRound() {
       if (this.gameData.currentTurn === this.player.userName) {
         this.gatherResources = true;
@@ -1295,16 +1233,16 @@ export default {
     },
     nextPlayerRound() {
       // TODO: Add logic to reveal character name when it's their turn && they're not dead
-      if (this.gameData.currentTurn === this.player.userName) {
-        this.gatherResources = true;
-        this.checkIfPlayerIsKing();
-        if (this.player.isAlive === false) {
-          this.player.isAlive = true;
-          store.commit("updatePlayerToGameData", this.player);
-          this.socket.emit("updateGameData", this.gameData);
-          this.socket.emit("turnEnded", this.gameData);
-        }
-      }
+      // if (this.gameData.currentTurn === this.player.userName) {
+      //   this.player.gatherResources = true;
+      //   // this.checkIfPlayerIsKing();
+      //   if (this.player.isAlive === false) {
+      //     this.player.isAlive = true;
+      //     store.commit("updatePlayerToGameData", this.player);
+      //     this.socket.emit("updateGameData", this.gameData);
+      //     this.socket.emit("turnEnded", this.gameData);
+      //   }
+      // }
       //TODO: Add logic to check if player is king on start of round;
       // checks if player is current turn and reveals that they are the king.
       // TODO: add logic to not lose kingstatus until someone else reveals
@@ -1419,13 +1357,13 @@ export default {
       this.showPowerScreen = false;
     },
     giveAllGold() {
-      let playerTaking = this.getPlayerByCharacterName("Thief");
-      playerTaking.gold += this.player.gold;
-      store.commit("updatePlayerToGameData", playerTaking);
-      this.player.gold = 0;
-      this.player.isMarkedForTheft = false;
-      store.commit("updatePlayerToGameData", this.player);
-      this.socket.emit("updateGameData", this.gameData);
+      // let playerTaking = this.getPlayerByCharacterName("Thief");
+      // playerTaking.gold += this.player.gold;
+      // store.commit("updatePlayerToGameData", playerTaking);
+      // this.player.gold = 0;
+      // this.player.isMarkedForTheft = false;
+      // store.commit("updatePlayerToGameData", this.player);
+      // this.socket.emit("updateGameData", this.gameData);
     },
     markPlayerForTheft(gameData, playerToStealFrom, characterName) {
       console.log(playerToStealFrom);

@@ -131,38 +131,39 @@ export default {
       return greatWall ? true : false;
     },
     destroyCardHandler(cardToDestroy, userName) {
-      console.log(cardToDestroy);
+      // console.log(cardToDestroy);
 
-      if (cardToDestroy.districtName === "Keep") {
-        return;
+      // if (cardToDestroy.districtName === "Keep") {
+      //   return;
+      // }
+
+      // let costSubtraction = -1;
+      // let greatWall = this.doesPlayerHaveGreatWall(userName);
+      // console.log("IS Great Wall dcHandler", greatWall);
+      // costSubtraction =
+      //   greatWall && cardToDestroy.districtName !== "Great Wall" ? 0 : 1;
+
+      // console.log("costSubtraction dcHandler", greatWall);
+      // if (
+      //   !this.isDestroying ||
+      //   this.player.gold < Number(cardToDestroy.cost) - costSubtraction
+      // ) {
+      //   console.log("NOT ENOUGH MONEY");
+      //   return;
+      // }
+
+      // if (this.playedCards.length === 7) {
+      //   console.log("CITY COMPLETE");
+      //   //do nothing if completed city
+      //   return;
+      // }
+
+      // const data = { cardToDestroy, userName, greatWall };
+      // this.gameData.lastCardDestroyed = { userName, cardData: cardToDestroy };
+      if (this.player.isDestroying) {
+        this.socket.emit("destroyCard", {cardToDestroy, targetUserName});
       }
-
-      let costSubtraction = -1;
-      let greatWall = this.doesPlayerHaveGreatWall(userName);
-      console.log("IS Great Wall dcHandler", greatWall);
-      costSubtraction =
-        greatWall && cardToDestroy.districtName !== "Great Wall" ? 0 : 1;
-
-      console.log("costSubtraction dcHandler", greatWall);
-      if (
-        !this.isDestroying ||
-        this.player.gold < Number(cardToDestroy.cost) - costSubtraction
-      ) {
-        console.log("NOT ENOUGH MONEY");
-        return;
-      }
-
-      if (this.playedCards.length === 7) {
-        console.log("CITY COMPLETE");
-        //do nothing if completed city
-        return;
-      }
-
-      const data = { cardToDestroy, userName, greatWall };
-      this.gameData.lastCardDestroyed = { userName, cardData: cardToDestroy };
-      store.commit("destroyPlayedCard", data);
-      this.socket.emit("updateGameData", this.gameData);
-      this.destructionComplete();
+      // this.destructionComplete();
     },
   },
 };
