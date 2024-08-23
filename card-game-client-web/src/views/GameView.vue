@@ -759,14 +759,14 @@ export default {
       console.log("gamedata was updated!", this.gameData);
     });
 
-    this.socket.on("allPlayersDrafted", (gameData) => {
-      store.commit("updateGameData", gameData);
-      // sort game data in backend before passing back here.
-      // So that a start characerRound function
-      // can be called safely
-      // we can also begin with the incoming playerturn name;
-      this.startPlayerRound();
-    });
+    // this.socket.on("allPlayersDrafted", (gameData) => {
+    //   store.commit("updateGameData", gameData);
+    //   // sort game data in backend before passing back here.
+    //   // So that a start characerRound function
+    //   // can be called safely
+    //   // we can also begin with the incoming playerturn name;
+    //   // this.startPlayerRound();
+    // });
 
     this.socket.on("allPlayerTurnsCompleted", (newGameData) => {
       store.commit("updateGameData", newGameData);
@@ -1096,16 +1096,16 @@ export default {
         .substr(0, 5);
     },
     draftRound() {
-      if (this.gameData.currentTurn === this.player.userName) {
-        if (this.player.disconnected) {
-          let cardToDraft = this.gameData.charactersDeck.find(
-            (card) => card.drafted === false && card.burned === false
-          );
+      // if (this.gameData.currentTurn === this.player.userName) {
+      //   if (this.player.disconnected) {
+      //     let cardToDraft = this.gameData.charactersDeck.find(
+      //       (card) => card.drafted === false && card.burned === false
+      //     );
 
-          this.draftCharacter(cardToDraft);
-        }
-        this.showCharacterCards = true;
-      }
+      //     this.draftCharacter(cardToDraft);
+      //   }
+      //   this.showCharacterCards = true;
+      // }
     },
     plusOneGold() {
       this.player.gold += 1;
@@ -1114,22 +1114,20 @@ export default {
       this.socket.emit("updateGameData", this.gameData);
     },
     // checks for duplicate in played zone
-    hasCardAlreadyBeenPlayed(cardName, player) {
-      for (let card of player.districts) {
-        if (card.districtName === cardName) {
-          return true;
-        }
-      }
+    // hasCardAlreadyBeenPlayed(cardName, player) {
+    //   for (let card of player.districts) {
+    //     if (card.districtName === cardName) {
+    //       return true;
+    //     }
+    //   }
 
-      return false;
-    },
+    //   return false;
+    // },
     doubleClickPlayCard(cardElement, card) {
       this.canPlayDistrictHandler(cardElement, true, card);
 
-      if (this.cardCanBePlayed) {
-        this.player.cards = this.player.cards.filter((c) => c.id !== card.id);
-        this.player.districts.push(card);
-        this.districtCardHasBeenPlayed();
+      if (this.player.cardCanBePlayed) {
+        this.districtCardHasBeenPlayed(card);
       } else {
         console.log("THIS CANNOT BE PLAYED");
       }
@@ -1137,70 +1135,75 @@ export default {
     canPlayDistrictHandler(card, isDblClick, cardDataFromDoubleClick) {
       console.log(card);
       this.drag = true;
-      this.cardCanBePlayed = false;
-      const cardData = isDblClick
-        ? [
-            cardDataFromDoubleClick.cost,
-            cardDataFromDoubleClick.districtName,
-            cardDataFromDoubleClick.type,
-          ]
-        : card.item.innerText.split("\n");
-      const cardCost = Number(cardData[0]);
-      const cardName = cardData[1];
-      const cardType = cardData[3];
-      let hasCardAlreadyBeenPlayed = this.hasCardAlreadyBeenPlayed(
-        cardName,
-        this.player
-      );
-      this.rememberCardCost = cardCost;
-      // TODO: replace this crazy if statement with something more readable/maintainable
-      if (
-        this.player.gold >= cardCost &&
-        this.gameData.currentTurn === this.player.userName &&
-        !this.districtPlayed &&
-        !hasCardAlreadyBeenPlayed &&
-        !this.showPowerScreen
-      ) {
-        this.cardCanBePlayed = true;
+      if (this.gameData.currentTurn !== this.player.userName) {
+        return;
       }
+      this.socket.emit("canPlayDistrictHandler", ({card, isDblClick, cardDataFromDoubleClick}));
+      // this.cardCanBePlayed = false;
+      // const cardData = isDblClick
+      //   ? [
+      //       cardDataFromDoubleClick.cost,
+      //       cardDataFromDoubleClick.districtName,
+      //       cardDataFromDoubleClick.type,
+      //     ]
+      //   : card.item.innerText.split("\n");
+      // const cardCost = Number(cardData[0]);
+      // const cardName = cardData[1];
+      // const cardType = cardData[3];
+      // let hasCardAlreadyBeenPlayed = this.hasCardAlreadyBeenPlayed(
+      //   cardName,
+      //   this.player
+      // );
+      // this.rememberCardCost = cardCost;
+      // // TODO: replace this crazy if statement with something more readable/maintainable
+      // if (
+      //   this.player.gold >= cardCost &&
+      //   this.gameData.currentTurn === this.player.userName &&
+      //   !this.districtPlayed &&
+      //   !hasCardAlreadyBeenPlayed &&
+      //   !this.showPowerScreen
+      // ) {
+      //   this.cardCanBePlayed = true;
+      // }
     },
-    districtCardHasBeenPlayed() {
-      this.cardCanBePlayed = false;
-      this.districtPlayed = true;
-      this.player.gold -= this.rememberCardCost;
-      this.isPlayerArchitect();
-      if (this.player.districts.length === 7) {
-        this.districtPlayed = true;
-        if (this.gameData.finishedFirst === "") {
-          this.gameData.finishedFirst = this.player.userName;
-        }
-        if (!this.gameData.finalTurn) {
-          this.socket.emit("finalTurn");
-          store.commit("setFinalTurn");
-        }
-      }
-      this.newChat(`${this.player.userName} played a district.`, "System");
-      store.commit("updatePlayerToGameData", this.player);
-      store.commit("updateGameData", this.gameData);
-      this.socket.emit("districtPlayed", this.gameData);
+    districtCardHasBeenPlayed(card) {
+      this.socket.emit("districtPlayed", card);
+      // this.cardCanBePlayed = false;
+      // this.districtPlayed = true;
+      // this.player.gold -= this.rememberCardCost;
+      // this.isPlayerArchitect();
+      // if (this.player.districts.length === 7) {
+      //   this.districtPlayed = true;
+      //   if (this.gameData.finishedFirst === "") {
+      //     this.gameData.finishedFirst = this.player.userName;
+      //   }
+      //   if (!this.gameData.finalTurn) {
+      //     this.socket.emit("finalTurn");
+      //     store.commit("setFinalTurn");
+      //   }
+      // }
+      // this.newChat(`${this.player.userName} played a district.`, "System");
+      // store.commit("updatePlayerToGameData", this.player);
+      // store.commit("updateGameData", this.gameData);
+      // this.socket.emit("districtPlayed", this.gameData);
     },
-    isPlayerArchitect() {
-      if (
-        this.player.character.name === "Architect" &&
-        this.architectBuildLimitCounter < 3
-      ) {
-        this.architectBuildLimitCounter++;
-        this.districtPlayed = false;
-      }
-    },
+    // isPlayerArchitect() {
+    //   if (
+    //     this.player.character.name === "Architect" &&
+    //     this.architectBuildLimitCounter < 3
+    //   ) {
+    //     this.architectBuildLimitCounter++;
+    //     this.districtPlayed = false;
+    //   }
+    // },
     draftCharacter(character) {
-      this.player.character = character;
-      store.commit("updatePlayerToGameData", this.player);
-      const index = this.gameData.charactersDeck.indexOf(character);
-      this.gameData.charactersDeck[index].drafted = true;
-      this.showCharacterCards = false;
-      this.newChat(`${this.player.userName} has drafted a character`, "System");
-      this.socket.emit("nextDraftRound", this.gameData);
+      // this.player.character = character;
+      // store.commit("updatePlayerToGameData", this.player);
+      // const index = this.gameData.charactersDeck.indexOf(character);
+      // this.gameData.charactersDeck[index].drafted = true;
+      // this.showCharacterCards = false;
+      // this.newChat(`${this.player.userName} has drafted a character`, "System");
+      this.socket.emit("draftCharacter", character);
     },
     // removeKingStatus() {
     //   for (let player of this.gameData.players) {
@@ -1218,10 +1221,10 @@ export default {
     //   // player will get updated in store when they collect resources or use power
     // },
     startPlayerRound() {
-      if (this.gameData.currentTurn === this.player.userName) {
-        this.gatherResources = true;
-        this.checkIfPlayerIsKing();
-      }
+      // if (this.gameData.currentTurn === this.player.userName) {
+      //   this.gatherResources = true;
+      //   this.checkIfPlayerIsKing();
+      // }
 
       // do a check to see if player is a character that requires taking immediate action before
       // gathering resources.
@@ -1336,6 +1339,7 @@ export default {
         (player) => player.character.name == characterName
       );
     },
+    //TODO: move this next
     killPlayer(gameData, playerToKill, characterName) {
       store.commit("updateDeadCharacter", characterName);
       let foundPlayer = gameData.players.find(

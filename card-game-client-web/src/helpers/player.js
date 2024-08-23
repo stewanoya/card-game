@@ -96,6 +96,16 @@ export default class Player {
     return false;
   }
 
+  isPlayerArchitect() {
+    if (
+      this.character.name === "Architect" &&
+      this.architectBuildLimitCounter < 3
+    ) {
+      this.architectBuildLimitCounter++;
+      this.districtPlayed = false;
+    }
+  }
+
   giveAllGoldToTheif = (players) => {
     let playerTaking = getPlayerByCharacterName("Thief", players);
     if (playerTaking) {

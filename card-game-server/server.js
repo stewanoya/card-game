@@ -51,6 +51,17 @@ io.on("connection", (socket) => {
     io.emit("connectedPlayer", gameData.players);
   });
 
+  socket.on("draftCharacter", (character) => {
+    let currentPlayer = gameData.getCurrentPlayer();
+    currentPlayer.character = character;
+    const index = this.gameData.charactersDeck.indexOf(character);
+    this.gameData.charactersDeck[index].drafted = true;
+    currentPlayer.showCharacterCards = false;
+    gameData.nextDraftTurn();
+    // this.newChat(`${this.player.userName} has drafted a character`, "System");
+    this.socket.emit("updateGameData", gameData);
+  })
+
 
   socket.on("getDeckReady", (decks) => {
     if (gameData.gameStarted) {
@@ -70,10 +81,15 @@ io.on("connection", (socket) => {
       player.cards = [card1, card2, card3, card4];
       player.gold = 2;
     });
-    io.emit("initPlayerDetails", gameData);
+    let firstPlayerTurn = gameData.players[0];
+    if (firstPlayerTurn.disconnected) {
+
+    }
+    firstPlayerTurn.showCharacterCards = true;
     gameData.gameStarted = true;
-    gameData.currentTurn = gameData.players[0].userName;
-    io.emit("draftRound", gameData);
+    gameData.currentTurn = firstPlayerTurn.userName;
+    
+    io.emit("updateGameData", gameData);
   });
 
   socket.on("gameStart", () => {
@@ -258,30 +274,89 @@ io.on("connection", (socket) => {
     io.emit("updateGameData", gameData);
   })
 
+  socket.on("canPlayDistrictHandler", ({card, isDblClick, cardDataFromDoubleClick}) => {
+    let currentPlayer = gameData.getCurrentPlayer();
+
+    currentPlayer.cardCanBePlayed = false;
+    const cardData = isDblClick
+      ? [
+          cardDataFromDoubleClick.cost,
+          cardDataFromDoubleClick.districtName,
+          cardDataFromDoubleClick.type,
+        ]
+      : card.item.innerText.split("\n");
+    const cardCost = Number(cardData[0]);
+    const cardName = cardData[1];
+    const cardType = cardData[3];
+    const hasCardAlreadyBeenPlayed = gameData.hasCardAlreadyBeenPlayed(cardName);
+    currentPlayer.rememberCardCost = cardCost;
+    // TODO: replace this crazy if statement with something more readable/maintainable
+    if (
+      currentPlayer.gold >= cardCost &&
+      !currentPlayer.districtPlayed &&
+      !hasCardAlreadyBeenPlayed &&
+      currentPlayer.showPowerScreen
+    ) {
+      currentPlayer.cardCanBePlayed = true;
+    }
+    io.emit("updateGameData", gameData);
+  });
+
+  socket.on("districtPlayed", (card) => {
+    let currentPlayer = gameData.getCurrentPlayer();
+    currentPlayer.cardCanBePlayed = false;
+    currentPlayer.districtPlayed = true;
+    currentPlayer.gold -= currentPlayer.rememberCardCost;
+    currentPlayer.isPlayerArchitect();
+    if (currentPlayer.districts.length === 7) {
+      currentPlayer.districtPlayed = true; // set to true as to not build more than 7 even if architect
+      if (gameData.finishedFirst === "") {
+        gameData.finishedFirst = this.player.userName;
+      }
+      if (!gameData.finalTurn) {
+        //TODO: do something on this emit..
+        gameData.finalTurn = true;
+        io.emit("finalTurn");
+        // store.commit("setFinalTurn");
+      }
+    }
+    // this.newChat(`${this.player.userName} played a district.`, "System");
+    currentPlayercards = currentPlayer.cards.filter((c) => c.id !== card.id);
+    currentPlayer.districts.push(card);
+    io.emit("updateGameData", gameData);
+  })
+
   // socket.on("updateGameData", (newGameData) => {
   //   gameData = newGameData;
   //   io.emit("updateGameData", gameData);
   // });
 
-  socket.on("nextDraftRound", (newGameData) => {
-    gameData = newGameData;
+  // socket.on("nextDraftRound", (newGameData) => {
+  //   gameData = newGameData;
 
-    const nextPlayerTurn =
-      gameData.players[
-        getIndexOfPlayerByName(gameData.players, gameData.currentTurn) + 1
-      ];
+  //   const nextPlayerTurn =
+  //     gameData.players[
+  //       getIndexOfPlayerByName(gameData.players, gameData.currentTurn) + 1
+  //     ];
 
-    if (nextPlayerTurn === undefined) {
-      gameData.players.sort(
-        (player1, player2) => player1.character.value - player2.character.value
-      );
-      gameData.currentTurn = gameData.players[0].userName;
-      return io.emit("allPlayersDrafted", gameData);
-    }
+  //   if (nextPlayerTurn === undefined) {
+  //     gameData.players.sort(
+  //       (player1, player2) => player1.character.value - player2.character.value
+  //     );
+  //     let firstPlayerTurn = gameData.players[0];
+  //     firstPlayerTurn.gatherResources = true;
+  //     const isKing = firstPlayerTurn.checkIfPlayerIsKing();
+  //     if (isKing) {
+  //       // remove king status on previous king
+  //       gameData.removeKingStatusFromPrevKing();
+  //     }
+  //     gameData.currentTurn = firstPlayerTurn.userName;
+  //     return io.emit("updateGameData", gameData);
+  //   }
 
-    gameData.currentTurn = nextPlayerTurn.userName;
-    io.emit("draftRound", gameData);
-  });
+  //   gameData.currentTurn = nextPlayerTurn.userName;
+  //   io.emit("draftRound", gameData);
+  // });
 
   socket.on("newHost", (newGameData) => {
     gameData = { ...newGameData };
@@ -356,13 +431,4 @@ const getOpponents = (player, array) => {
   return array.filter((enemy) => player.playerName !== enemy.playerName);
 };
 
-const getIndexOfPlayerByName = (players, currentTurnName) => {
-  let foundIndex;
-  players.forEach((player, index) => {
-    if (player.userName == currentTurnName) {
-      foundIndex = index;
-    }
-  });
 
-  return foundIndex;
-};

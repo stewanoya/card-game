@@ -100,4 +100,50 @@ export default class GameData {
     currentPlayer.gold = difference;
     console.log("gold after", currentPlayer.gold);
   }
+
+  nextDraftTurn() {
+    const nextPlayerTurn =
+      this.players[
+        getIndexOfPlayerByName(this.gameData.players, this.gameData.currentTurn) + 1
+      ];
+
+    if (nextPlayerTurn === undefined) {
+      this.players.sort(
+        (player1, player2) => player1.character.value - player2.character.value
+      );
+      let firstPlayerTurn = this.players[0];
+      firstPlayerTurn.gatherResources = true;
+      const isKing = firstPlayerTurn.checkIfPlayerIsKing();
+      if (isKing) {
+        // remove king status on previous king
+        this.removeKingStatusFromPrevKing();
+      }
+      this.currentTurn = firstPlayerTurn.userName;
+    } else { 
+      this.currentTurn = nextPlayerTurn.userName;
+    }
+  }
+
+  hasCardAlreadyBeenPlayed(cardName) {
+    const player = this.getCurrentPlayer();
+    for (let card of player.districts) {
+      if (card.districtName === cardName) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  getIndexOfPlayerByName() {
+    let foundIndex;
+    this.players.forEach((player, index) => {
+      if (player.userName == this.currentTurn) {
+        foundIndex = index;
+        return foundIndex;
+      }
+    });
+  
+    return foundIndex;
+  };
 }
