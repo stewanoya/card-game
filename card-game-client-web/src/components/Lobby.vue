@@ -53,11 +53,11 @@ export default {
     return {};
   },
   created() {
-    this.socket.on("newHost", (gameData) => {
-      store.commit("updateGameData", gameData);
-      store.commit("updatePlayerFromGameData", gameData.players);
-      console.log("new host selected!", this.gameData);
-    });
+    // this.socket.on("newHost", (gameData) => {
+    //   store.commit("updateGameData", gameData);
+    //   store.commit("updatePlayerFromGameData", gameData.players);
+    //   console.log("new host selected!", this.gameData);
+    // });
   },
   computed: {
     ...mapState(["player", "gameData"]),
@@ -82,10 +82,10 @@ export default {
       "updateGameData",
     ]),
     handleSelectNewHost(chosenPlayer) {
-      store.commit("removeHost");
-      chosenPlayer.isHost = true;
-      store.commit("updatePlayerToGameData", chosenPlayer);
-      this.socket.emit("newHost", this.gameData);
+      // store.commit("removeHost");
+      // chosenPlayer.isHost = true;
+      // store.commit("updatePlayerToGameData", chosenPlayer);
+      this.socket.emit("newHost", chosenPlayer.id);
     },
   },
 };

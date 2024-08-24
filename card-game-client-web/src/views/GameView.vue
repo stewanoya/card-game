@@ -40,7 +40,7 @@
       </svg>
     </div>
 
-    <div class="gather-card-container" v-if="resourceGatherCards.length >= 2">
+    <div class="gather-card-container" v-if="player.resourceGatherCards.length >= 2">
       <n-card
         :title="
           doesPlayerHaveLibrary ? 'Select 2 cards' : 'Double tap your choice'
@@ -49,7 +49,7 @@
       >
         <div style="display: flex; justify-content: space-around">
           <DistrictCard
-            v-for="card in resourceGatherCards"
+            v-for="card in player.resourceGatherCards"
             :class="{
               'selected-to-gather': !!selectedResourceGatherCards.find(
                 (s) => s.id === card.id
@@ -93,7 +93,7 @@
         <n-input
           style="text-align: left"
           @keyup.enter="sendChat()"
-          v-model:value="chatMessage"
+          :value="chatMessage"
           placeholder="Message.."
         />
         <n-button color="purple" @click="sendChat()">Send</n-button>
@@ -530,7 +530,7 @@
         >
       </div>
     </div>
-    <div class="characters-container" v-if="showCharacterCards">
+    <div class="characters-container" v-if="player.showCharacterCards">
       <h1 class="choose-title">Choose a character!</h1>
       <CharacterCard
         v-for="character in gameData.charactersDeck"
@@ -660,7 +660,7 @@ import Chat from "../models/Chat";
 
 <script>
 import store from "@/store";
-import DistrictsDeck from "@/helpers/districtsDeck.js";
+// import DistrictsDeck from "@/helpers/districtsDeck.js";
 import DistrictCard from "@/components/DistrictCard.vue";
 import PlayedDistrict from "@/components/PlayedDistrict.vue";
 import CharacterCard from "@/components/CharacterCard.vue";
@@ -677,61 +677,27 @@ import OpponentsContainer from "@/components/OpponentsContainer.vue";
 export default {
   data() {
     return {
-      initDraft: false,
-      drag: false,
-      chatMessage: "",
-      smithyAbilityUsed: false,
-      schoolOfMagicAbilityUsed: false,
-      isUsingSchoolOfMagicAbility: false,
-      laboratoryAbilityUsed: false,
-      isUsingLabratoryAbility: false,
-      cardCanBePlayed: false,
-      rememberCardCost: undefined,
-      districtPlayed: false,
-      gatherResources: false,
-      graveYardCard: null,
-      showHauntedCityAbility: false,
-      showGraveYard: false,
-      showFinalScores: false,
-      showCharacterCards: false,
-      powerUsed: false,
-      showPowerScreen: false,
-      isUsingPower: false,
-      isTradingWithDeck: false,
-      isDestroying: false,
-      gotPlusOneGold: false,
-      showCommunityBuildingScreen: false,
-      showFinalScores: false,
-      canCollectByType: true,
-      canDestroy: true,
-      communityBuildCompleted: false,
-      architectBuildLimitCounter: 0,
-      cardsToBeTradedWithDeck: [],
-      resourceGatherCards: [],
-      selectedResourceGatherCards: [],
-      charactersArray: [],
-      finalScores: [],
     };
   },
   created() {
-    this.socket.on("draftRound", (gameData) => {
-      store.commit("updateGameData", gameData);
-      this.draftRound();
-    });
-    this.socket.on("initPlayerDetails", (gameData) => {
-      store.commit("updateGameData", gameData);
-      store.commit("updatePlayers", gameData.players);
-      store.commit("updatePlayerFromGameData", gameData.players);
-      // console.log("gameData", gameData);
-      // if (
-      //   gameData.initOrderOfPlayers[0].userName === this.player.userName &&
-      //   !this.initDraft
-      // ) {
-      //   this.initDraft = true;
-      //   console.log("BEGIN DRAFT ONLY GETTING CALLED ONCE");
-      //   this.socket.emit("beginDraft", gameData);
-      // }
-    });
+    // this.socket.on("draftRound", (gameData) => {
+    //   store.commit("updateGameData", gameData);
+    //   this.draftRound();
+    // });
+    // this.socket.on("initPlayerDetails", (gameData) => {
+    //   store.commit("updateGameData", gameData);
+    //   store.commit("updatePlayers", gameData.players);
+    //   store.commit("updatePlayerFromGameData", gameData.players);
+    //   // console.log("gameData", gameData);
+    //   // if (
+    //   //   gameData.initOrderOfPlayers[0].userName === this.player.userName &&
+    //   //   !this.initDraft
+    //   // ) {
+    //   //   this.initDraft = true;
+    //   //   console.log("BEGIN DRAFT ONLY GETTING CALLED ONCE");
+    //   //   this.socket.emit("beginDraft", gameData);
+    //   // }
+    // });
     this.socket.on("disonnectedPlayerDuringGame", (gameData) => {
       store.commit("updateGameData", gameData);
     });
@@ -753,11 +719,11 @@ export default {
       this.displayFinalScores(scores);
     });
 
-    this.socket.on("updateGameData", (gameData) => {
-      store.commit("updateGameData", gameData);
-      store.commit("updatePlayerFromGameData", gameData.players);
-      console.log("gamedata was updated!", this.gameData);
-    });
+    // this.socket.on("updateGameData", (gameData) => {
+    //   store.commit("updateGameData", gameData);
+    //   store.commit("updatePlayerFromGameData", gameData.players);
+    //   console.log("gamedata was updated!", this.gameData);
+    // });
 
     // this.socket.on("allPlayersDrafted", (gameData) => {
     //   store.commit("updateGameData", gameData);
@@ -768,27 +734,23 @@ export default {
     //   // this.startPlayerRound();
     // });
 
-    this.socket.on("allPlayerTurnsCompleted", (newGameData) => {
-      store.commit("updateGameData", newGameData);
-      this.nextGameRound();
-    });
-    this.socket.on("nextPlayerTurn", (gameData) => {
-      store.commit("updateGameData", gameData);
-      store.commit("updatePlayerFromGameData", gameData.players);
-      if (
-        this.gameData.currentTurn == this.player.userName &&
-        this.player.isMarkedForTheft
-      ) {
-        this.giveAllGold();
-      }
+    // this.socket.on("allPlayerTurnsCompleted", (newGameData) => {
+    //   store.commit("updateGameData", newGameData);
+    //   this.nextGameRound();
+    // });
+    // this.socket.on("nextPlayerTurn", (gameData) => {
+    //   store.commit("updateGameData", gameData);
+    //   store.commit("updatePlayerFromGameData", gameData.players);
+    //   if (
+    //     this.gameData.currentTurn == this.player.userName &&
+    //     this.player.isMarkedForTheft
+    //   ) {
+    //     this.giveAllGold();
+    //   }
 
-      this.nextPlayerRound();
-    });
-
-    setTimeout(() => {
-      this.startGame();
-    }, 10);
-    store.commit("updateInit", true);
+    //   this.nextPlayerRound();
+    // });
+    // store.commit("updateInit", true);
   },
   name: "GameView",
   components: {
@@ -888,52 +850,52 @@ export default {
       }
     },
     nextGameRound() {
-      let charactersDeck = new CharacterDeck().newDeck(
-        DEFAULT_CHARACTERS_8,
-        CHARACTER_VALUES_8
-      );
-      this.burnCharacterCards();
-      this.gameData.charactersDeck = [...charactersDeck];
+      // let charactersDeck = new CharacterDeck().newDeck(
+      //   DEFAULT_CHARACTERS_8,
+      //   CHARACTER_VALUES_8
+      // );
+      // this.burnCharacterCards();
+      // this.gameData.charactersDeck = [...charactersDeck];
 
-      store.commit("updateGameData", this.gameData);
-      this.resetLocalValues();
+      // store.commit("updateGameData", this.gameData);
+      // this.resetLocalValues();
 
-      this.socket.emit("beginDraft", this.gameData);
+      // this.socket.emit("beginDraft", this.gameData);
     },
     //TODO: MOVE ALL BURNING TO SERVER SIDE
     // THIS FUNCTION IS REPEATED ON BOTH CLIENT SIDE AND SERVER SIDE
-    burnCharacterCards() {
-      this.socket.emit("burnCards");
-    },
+    // burnCharacterCards() {
+    //   this.socket.emit("burnCards");
+    // },
     resetLocalValues() {
-      this.drag = false;
-      this.cardCanBePlayed = false;
-      this.rememberCardCost = undefined;
-      this.districtPlayed = false;
-      this.gatherResources = false;
-      this.showCharacterCards = false;
-      this.powerUsed = false;
-      this.showPowerScreen = false;
-      this.isUsingPower = false;
-      this.isTradingWithDeck = false;
-      this.showFinalScores = false;
-      this.isDestroying = false;
-      this.gotPlusOneGold = false;
-      this.showHauntedCityAbility = false;
-      this.laboratoryAbilityUsed = false;
-      this.showCommunityBuildingScreen = false;
-      this.canCollectByType = true;
-      this.canDestroy = true;
-      this.communityBuildCompleted = false;
-      this.architectBuildLimitCounter = 0;
-      this.cardsToBeTradedWithDeck = [];
-      this.resourceGatherCards = [];
-      this.graveYardCard = null;
-      this.showGraveYard = false;
-      this.smithyAbilityUsed = false;
-      this.schoolOfMagicAbilityUsed = false;
-      this.finalScores = [];
-      this.charactersArray = [...DEFAULT_CHARACTERS_8];
+      // this.drag = false;
+      // this.cardCanBePlayed = false;
+      // this.rememberCardCost = undefined;
+      // this.districtPlayed = false;
+      // this.gatherResources = false;
+      // this.showCharacterCards = false;
+      // this.powerUsed = false;
+      // this.showPowerScreen = false;
+      // this.isUsingPower = false;
+      // this.isTradingWithDeck = false;
+      // this.showFinalScores = false;
+      // this.isDestroying = false;
+      // this.gotPlusOneGold = false;
+      // this.showHauntedCityAbility = false;
+      // this.laboratoryAbilityUsed = false;
+      // this.showCommunityBuildingScreen = false;
+      // this.canCollectByType = true;
+      // this.canDestroy = true;
+      // this.communityBuildCompleted = false;
+      // this.architectBuildLimitCounter = 0;
+      // this.cardsToBeTradedWithDeck = [];
+      // this.resourceGatherCards = [];
+      // this.graveYardCard = null;
+      // this.showGraveYard = false;
+      // this.smithyAbilityUsed = false;
+      // this.schoolOfMagicAbilityUsed = false;
+      // this.finalScores = [];
+      // this.charactersArray = [...DEFAULT_CHARACTERS_8];
     },
     showPowerScreenHandler() {
       this.socket.emit("showPowerScreen");

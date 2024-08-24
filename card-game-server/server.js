@@ -3,7 +3,7 @@ import cors from "cors";
 import express from "express";
 import { Server } from 'socket.io';
 import { createServer } from 'http'
-import { v4 } from "uuid";
+
 import GameData from "./models/gameData.js";
 
 const corsOptions = {
@@ -37,9 +37,11 @@ let gameData = new GameData();
 let firstDraftRound = true;
 
 io.on("connection", (socket) => {
-  socket.on("newPlayer", (player) => {
-    player.id = socket.id;
-    console.log("A user has connected " + player.userName);
+
+
+  socket.on("newPlayer", (name) => {
+    let player = gameData.createNewPlayer(name, socket.id);
+    console.log("A user has connected " + name);
 
     if (gameData.players.length < 1) {
       gameData.host = player.userName;
@@ -47,63 +49,41 @@ io.on("connection", (socket) => {
     }
     player.originalIndex = gameData.players.length;
     gameData.players.push(player);
-    io.emit("initPlayerDetailsLobby", gameData.players);
-    io.emit("connectedPlayer", gameData.players);
+    io.emit("updateGameData", gameData);
   });
 
   socket.on("draftCharacter", (character) => {
     let currentPlayer = gameData.getCurrentPlayer();
+    console.log(currentPlayer);
     currentPlayer.character = character;
-    const index = this.gameData.charactersDeck.indexOf(character);
-    this.gameData.charactersDeck[index].drafted = true;
+    // const index = gameData.charactersDeck.indexOf(character);
+    // console.log("INDEX", index);
+    // gameData.charactersDeck[index].drafted = true;
+    gameData.setCharacterToDrafted(character);
     currentPlayer.showCharacterCards = false;
     gameData.nextDraftTurn();
     // this.newChat(`${this.player.userName} has drafted a character`, "System");
-    this.socket.emit("updateGameData", gameData);
+    io.emit("updateGameData", gameData);
   })
 
 
-  socket.on("getDeckReady", (decks) => {
-    if (gameData.gameStarted) {
-      return;
-    }
-    gameData.districtsDeck = decks.districtsDeck;
-    gameData.charactersDeck = decks.charactersDeck;
-    gameData.districtsDeck.forEach((card) => {
-      card.id = v4();
-    });
-    gameData.initOrderOfPlayers = [...gameData.players];
-    gameData.players.forEach((player) => {
-      let card1 = gameData.districtsDeck.shift();
-      let card2 = gameData.districtsDeck.shift();
-      let card3 = gameData.districtsDeck.shift();
-      let card4 = gameData.districtsDeck.shift();
-      player.cards = [card1, card2, card3, card4];
-      player.gold = 2;
-    });
-    let firstPlayerTurn = gameData.players[0];
-    if (firstPlayerTurn.disconnected) {
-
-    }
-    firstPlayerTurn.showCharacterCards = true;
-    gameData.gameStarted = true;
-    gameData.currentTurn = firstPlayerTurn.userName;
-    
+  socket.on("gameStart", () => {
+    gameData.buildDistrictsDeck();
+    gameData.prepareCharacterCards();
+    gameData.burnCharacterCards();
+    gameData.getReadyForFirstRound();
+    io.emit("gameStartedByHost");
     io.emit("updateGameData", gameData);
   });
 
-  socket.on("gameStart", () => {
-    io.emit("gameStartedByHost");
-  });
+  // socket.on("beginDraft", (newGameData) => {
+  //   gameData = newGameData;
+  //   gameData.currentTurn = gameData.players[0].userName;
 
-  socket.on("beginDraft", (newGameData) => {
-    gameData = newGameData;
-    gameData.currentTurn = gameData.players[0].userName;
-
-    // TODO: confirm that getIndexOfPlayerByName works in second round of draft.
-    // I imagine it will be fine, since I sort by king anyway, and then just up by 1 everyturn
-    io.emit("draftRound", gameData);
-  });
+  //   // TODO: confirm that getIndexOfPlayerByName works in second round of draft.
+  //   // I imagine it will be fine, since I sort by king anyway, and then just up by 1 everyturn
+  //   io.emit("draftRound", gameData);
+  // });
 
   socket.on("finalTurn", () => {
     io.emit("finalTurn");
@@ -124,10 +104,11 @@ io.on("connection", (socket) => {
       }
       gameData.players = [...sortPlayersByKing(gameData.players)];
 
-      // clear selected characters
+      // prepare for next draft round
       gameData.players.forEach((player) => (player.character = {}));
-      io.emit("allPlayerTurnsCompleted", gameData);
-      return;
+      gameData.prepareCharacterCards();
+      gameData.burnCharacterCards();
+      gameData.resetPlayerLocalValues();
       // I have to reset character deck - DONE
       // I have to make sure all character booleans on players are reset - DONE
       // I have to find the king's original index - DONE
@@ -145,7 +126,7 @@ io.on("connection", (socket) => {
 
     nextPlayerTurn.gatherResources = true;
     //TODO: maybe create system chat to say this player is king?
-    const isKing = nextPlayerTurn.checkIfPlayerIsKing();
+    const isKing = gameData.isCurrentPlayerKing();
 
     if (isKing) {
       // remove king status on previous king
@@ -159,7 +140,7 @@ io.on("connection", (socket) => {
     }
 
     if (nextPlayerTurn.isMarkedForTheft) {
-      nextPlayerTurn.giveAllGoldToTheif(gameData.players);
+      gameData.giveAllGoldToTheif();
     }
 
     io.emit("updateGameData", gameData);
@@ -168,6 +149,8 @@ io.on("connection", (socket) => {
   socket.on("showPowerScreen", () => {
     let currentPlayer = gameData.getCurrentPlayer();
     currentPlayer.showPowerScreen = !currentPlayer.showPowerScreen;
+    console.log("SHOW POWER SCREEN", currentPlayer.showPowerScreen);
+    io.emit("updateGameData", gameData);
   })
 
   socket.on("killPlayer", (characterName) => {
@@ -239,62 +222,9 @@ io.on("connection", (socket) => {
     io.emit("updateGameData", this.gameData);
   })
 
-  socket.on("burnCards", () => {
-    const numberOfPlayers = gameData.players.length;
-    const charactersDeck = gameData.charactersDeck;
-    if (numberOfPlayers === 6) {
-      let indexToBurn = Math.floor(Math.random() * charactersDeck.length);
-      charactersDeck[indexToBurn].burned = true;
-      console.log("HERE IS CHARACTERS DECK", charactersDeck);
-    }
-
-    if (numberOfPlayers === 5) {
-      let indexToBurn = Math.floor(Math.random() * charactersDeck.length);
-      charactersDeck[indexToBurn].burned = true;
-      let indexToFlip = indexToBurn;
-      while (indexToBurn === indexToFlip) {
-        indexToFlip = Math.floor(Math.random() * charactersDeck.length);
-        // we cant burn king face up, so we just set it equal to index to burn to loop again.
-        if (charactersDeck[indexToFlip].name === "King") {
-          console.log("tried to burn king face up, rerolling");
-          indexToFlip = indexToBurn;
-          continue;
-        }
-      }
-      charactersDeck[indexToFlip].isFaceUp = true;
-    }
-
-    if (numberOfPlayers === 4) {
-      let indexToBurn = Math.floor(Math.random() * charactersDeck.length);
-      charactersDeck[indexToBurn].burned = true;
-      let indexToFlip = indexToBurn;
-      while (indexToBurn === indexToFlip) {
-        indexToFlip = Math.floor(Math.random() * charactersDeck.length);
-        // we cant burn king face up, so we just set it equal to index to burn to loop again.
-        if (charactersDeck[indexToFlip].name === "King") {
-          console.log("tried to burn king face up, rerolling");
-          indexToFlip = indexToBurn;
-          continue;
-        }
-      }
-      charactersDeck[indexToFlip].isFaceUp = true;
-
-      let indexToFlip2 = indexToBurn;
-      while (indexToFlip2 === indexToBurn) {
-        indexToFlip2 = Math.floor(Math.random() * charactersDeck.length);
-
-        if (
-          indexToFlip2 === indexToFlip ||
-          charactersDeck[indexToFlip2].name === "King"
-        ) {
-          indexToFlip2 = indexToBurn;
-          continue;
-        }
-      }
-      charactersDeck[indexToFlip2].isFaceUp = true;
-    }
-    io.emit("updateGameData", gameData);
-  })
+  // socket.on("burnCards", () => {
+  //   io.emit("updateGameData", gameData);
+  // })
 
   socket.on("canPlayDistrictHandler", ({card, isDblClick, cardDataFromDoubleClick}) => {
     let currentPlayer = gameData.getCurrentPlayer();
@@ -329,7 +259,7 @@ io.on("connection", (socket) => {
     currentPlayer.cardCanBePlayed = false;
     currentPlayer.districtPlayed = true;
     currentPlayer.gold -= currentPlayer.rememberCardCost;
-    currentPlayer.isPlayerArchitect();
+    gameData.isCurrentPlayerArchitect();
     if (currentPlayer.districts.length === 7) {
       currentPlayer.districtPlayed = true; // set to true as to not build more than 7 even if architect
       if (gameData.finishedFirst === "") {
@@ -343,7 +273,7 @@ io.on("connection", (socket) => {
       }
     }
     // this.newChat(`${this.player.userName} played a district.`, "System");
-    currentPlayercards = currentPlayer.cards.filter((c) => c.id !== card.id);
+    currentPlayer.cards = currentPlayer.cards.filter((c) => c.id !== card.id);
     currentPlayer.districts.push(card);
     io.emit("updateGameData", gameData);
   })
@@ -380,9 +310,9 @@ io.on("connection", (socket) => {
   //   io.emit("draftRound", gameData);
   // });
 
-  socket.on("newHost", (newGameData) => {
-    gameData = { ...newGameData };
-    io.emit("newHost", gameData);
+  socket.on("newHost", (playerId) => {
+    gameData.updateHost(playerId);
+    io.emit("updateGameData", gameData);
   });
 
   socket.on("districtPlayed", (newGameData) => {
@@ -411,7 +341,7 @@ io.on("connection", (socket) => {
 
       // check if all players have characters (aka it's action round)
       if (
-        gameData.players.every((player) => Object.keys(character).length > 1)
+        gameData.players.every((player) => Object.keys(player.character).length > 1)
       ) {
         // every player has character so we do next player turn if next player turn isnt undefined.
         // if next player turn is undefined we call next draft round

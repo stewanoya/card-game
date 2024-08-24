@@ -87,9 +87,13 @@ export default createStore({
       state.gameData.players = players;
     },
     updatePlayerFromGameData(state, players) {
-      state.player = players.filter(
-        (player) => player.userName === state.player.userName
-      )[0];
+        if (state.player) {
+          state.player = players.filter(
+            (player) => player.userName === state.player.userName
+          )[0];
+        } else {
+          state.player = players.find(i => i.id === state.socket.id);
+        }
     },
     updatePlayerToGameData(state, newPlayerData) {
       state.gameData.players[getPlayerIndex(state, newPlayerData.userName)] = {

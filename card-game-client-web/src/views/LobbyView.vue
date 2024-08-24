@@ -20,7 +20,7 @@
       color="#452059"
       class="lobby-button"
       :disabled="!gameData || gameData.players.length < 1"
-      v-if="player.isHost"
+      v-if="player && player.isHost"
       @click="startGame"
     >
       Start Game
@@ -91,6 +91,7 @@ export default {
         this.error = "This name is reserved";
         return;
       }
+      console.log("CONNECT CLICKED");
       this.connectPlayer(this.chosenUserName);
     },
     connectPlayer(chosenName) {
@@ -100,12 +101,19 @@ export default {
       const socket = io("http://localhost:5000/");
       store.commit("setSocket", socket);
       socket.on("connect", () => {
-        store.commit("createNewPlayer", chosenName);
-        socket.emit("newPlayer", this.player);
+        socket.emit("newPlayer", chosenName);
       });
 
-      socket.on("disconnectedPlayer", (newPlayersInfo) => {
-        store.commit("updatePlayers", newPlayersInfo);
+      // socket.on("disconnectedPlayer", (newPlayersInfo) => {
+      //   store.commit("updatePlayers", newPlayersInfo);
+      // });
+
+      
+      socket.on("updateGameData", (gameData) => {
+        console.log("gameData", gameData);
+        store.commit("updateGameData", gameData);
+        store.commit("updatePlayerFromGameData", gameData.players);
+        console.log("PLAYER", this.player);
       });
 
       socket.on("playerReconnect", (gameData) => {

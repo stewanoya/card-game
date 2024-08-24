@@ -363,7 +363,6 @@
 
 <script>
 import store from "@/store";
-import DistrictsDeck from "@/helpers/districtsDeck.js";
 import DistrictCard from "@/components/DistrictCard.vue";
 import PlayedDistrict from "@/components/PlayedDistrict.vue";
 import CharacterCard from "@/components/CharacterCard.vue";
@@ -477,25 +476,25 @@ export default {
   },
   methods: {
     startGame() {
-      if (this.init === false) {
-        this.charactersArray = [...DEFAULT_CHARACTERS_8];
-        let districtsDeck = new DistrictsDeck().shuffleDeck();
-        let charactersDeck = new CharacterDeck().newDeck(
-          DEFAULT_CHARACTERS_8,
-          CHARACTER_VALUES_8
-        );
-        this.burnCharacterCards(charactersDeck, this.gameData.players.length);
+      // if (this.init === false) {
+      //   this.charactersArray = [...DEFAULT_CHARACTERS_8];
+      //   let districtsDeck = new DistrictsDeck().shuffleDeck();
+      //   let charactersDeck = new CharacterDeck().newDeck(
+      //     DEFAULT_CHARACTERS_8,
+      //     CHARACTER_VALUES_8
+      //   );
+      //   this.burnCharacterCards(charactersDeck, this.gameData.players.length);
 
-        const decks = { districtsDeck, charactersDeck };
-        this.socket.emit("getDeckReady", decks);
+      //   const decks = { districtsDeck, charactersDeck };
+      //   this.socket.emit("getDeckReady", decks);
 
-        this.socket.on("initPlayerDetails", (gameData) => {
-          store.commit("updateGameData", gameData);
-          store.commit("updatePlayers", gameData.players);
-          store.commit("updatePlayerFromGameData", gameData.players);
-          this.socket.emit("beginDraft", gameData);
-        });
-      }
+      //   this.socket.on("initPlayerDetails", (gameData) => {
+      //     store.commit("updateGameData", gameData);
+      //     store.commit("updatePlayers", gameData.players);
+      //     store.commit("updatePlayerFromGameData", gameData.players);
+      //     this.socket.emit("beginDraft", gameData);
+      //   });
+      // }
     },
     nextGameRound() {
       let charactersDeck = new CharacterDeck().newDeck(

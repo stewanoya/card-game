@@ -1,4 +1,3 @@
-import { getPlayerByCharacterName } from "card-game-server/helpers/player-helpers";
 
 export default class Player {
   id = '' // socket id
@@ -56,94 +55,6 @@ export default class Player {
       (this.disconnected = disconnected);
   }
 
-  resetLocalValues() {
-    this.drag = false;
-    this.cardCanBePlayed = false;
-    this.rememberCardCost = undefined;
-    this.districtPlayed = false;
-    this.gatherResources = false;
-    this.showCharacterCards = false;
-    this.powerUsed = false;
-    this.showPowerScreen = false;
-    this.isUsingPower = false;
-    this.isTradingWithDeck = false;
-    this.showFinalScores = false;
-    this.isDestroying = false;
-    this.gotPlusOneGold = false;
-    this.showHauntedCityAbility = false;
-    this.laboratoryAbilityUsed = false;
-    this.showCommunityBuildingScreen = false;
-    this.canCollectByType = true;
-    this.canDestroy = true;
-    this.communityBuildCompleted = false;
-    this.architectBuildLimitCounter = 0;
-    this.cardsToBeTradedWithDeck = [];
-    this.resourceGatherCards = [];
-    this.graveYardCard = null;
-    this.showGraveYard = false;
-    this.smithyAbilityUsed = false;
-    this.schoolOfMagicAbilityUsed = false;
-    this.finalScores = [];
-  }
-
-  checkIfPlayerIsKing = () => {
-    if (this.character.name === "King") {
-      this.removeKingStatus();
-      this.isKing = true;
-      return true;
-    }
-  
-    return false;
-  }
-
-  isPlayerArchitect() {
-    if (
-      this.character.name === "Architect" &&
-      this.architectBuildLimitCounter < 3
-    ) {
-      this.architectBuildLimitCounter++;
-      this.districtPlayed = false;
-    }
-  }
-
-  giveAllGoldToTheif = (players) => {
-    let playerTaking = getPlayerByCharacterName("Thief", players);
-    if (playerTaking) {
-      playerTaking.gold += this.player.gold;
-      this.gold = 0;
-      this.isMarkedForTheft = false;
-    } else {
-      console.log("NO THEIF FOUND, HOW WERE THEY MARKED FOR THEFT??")
-    }
-  }
-
-  useCharacterPower() {
-    switch (
-      this.character.value
-      //write switch statement to determine what it is.
-    ) {
-    }
-
-    this.character.powerUsed = true;
-  }
-
-  gatherResources(choice) {
-    switch (choice) {
-      //write switch statement to take choice logic
-      // either draw 2 cards and keep 1
-      // or take 2 gold
-      case "gold":
-        this.gold += 2;
-        break;
-    }
-  }
-
-  buildDistrict(card) {
-    this.gold -= card.cost;
-    this.cards = this.cards.filter((cardHand) => cardHand.id != card.id);
-    this.districs.push(card);
-    return;
-  }
 }
 
 // const stew = new Player("stew");

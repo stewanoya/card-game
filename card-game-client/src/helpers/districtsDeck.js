@@ -32,8 +32,8 @@ const districtDataRAW = `Quantity,Name,Value,Type
 // import { readFileSync } from "fs";
 import { getUniqueDescription, getUniqueAbility } from "./getUniqueValues.js";
 
-const districtsDataPath = "../assets/DEFAULT_DISTRICTS.txt";
-// const districtDataRAW = readFileSync(districtsDataPath, "utf-8");
+// const districtsDataPath = "../assets/DEFAULT_DISTRICTS.txt";
+// // const districtDataRAW = readFileSync(districtsDataPath, "utf-8");
 const distractDataRows = districtDataRAW.split("\n");
 const DISTRICT_DETAILS = [];
 const DISTRICT_QUANTITIES = [];
