@@ -1,6 +1,6 @@
 # Card Game
 
-Card Game is a digital rendition of one of my favorite board games, (https://boardgamegeek.com/boardgame/478/citadels)[Citadels]. 
+Card Game is a digital rendition of one of my favorite board games, [Citadels](https://boardgamegeek.com/boardgame/478/citadels). 
 
 ## How to run
 
